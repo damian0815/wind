@@ -9,7 +9,7 @@
 //static char* MOVIE = "/Volumes/SPACE/video/damian's grass.dv";
 //static char* MOVIE = "/Users/damian/4.archive/oespacograss/dsmalltest3.mov";
 
-static char* MOVIE = "/Users/damian/Movies/grass preview.iMovieProject/Media/Clip 02.dv";
+//static char* MOVIE = "/Users/damian/Movies/grass preview.iMovieProject/Media/Clip 02.dv";
 //static char* MOVIE = "/Users/damian/Movies/timelapse.iMovieProject/Media/Clip 12.mov.ff.mp4";
 
 //static char* MOVIE = "/tmp/ram/grass-silvery.mov";
@@ -26,7 +26,7 @@ static int CAPTURE_HEIGHT = 240;
 const static int DUMP_FRAMESIZE_WIDTH = 720;
 static const int DUMP_FRAMESIZE_HEIGHT = 576;
 
-const static int START_FRAME = 1400;
+const static int START_FRAME = 1500;
 
 
 //--------------------------------------------------------------
@@ -96,32 +96,18 @@ void testApp::setup(){
 	bLearnBakground = true;
 	threshold = 30;
 	
-
-	/*
-	// optical flow stuff
-	block_size = 2;
-    shift_size = 1;
-    
-    rows = int(ceil(double(height) / block_size));
-    cols = int(ceil(double(width) / block_size));
-    
-    velx = cvCreateMat (rows, cols, CV_32FC1);
-    vely = cvCreateMat (rows, cols, CV_32FC1);
-    
-    cvSetZero(velx);
-    cvSetZero(vely);
-    
-    block = cvSize (block_size, block_size);
-    shift = cvSize (shift_size, shift_size);
-    max_range = cvSize (10, 10);
-	 */
 	
-	dumper.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_GRAYSCALE );
+	dumper.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
 	pre_dumper.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT );
+	pre_dumper_color.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT );
+	
+	fbo_pixels = (unsigned char*)malloc( ofGetWidth()*ofGetHeight()*3 );
 	
 	printf("opening OSC connection to %s:%i\n", HOST, PORT );
 	osc_sender.setup( HOST, PORT );
 	
+	
+	got = false;
 }
 
 
@@ -148,211 +134,161 @@ void testApp::update(){
 	vidPlayer.idleMovie();
 
 #endif
-	
+
+	got = false;
+
 #ifdef CAM_CAPTURE
 	if ( vidGrabber.isFrameNew() )
 	{
 		colorImg.setFromPixels(vidGrabber.getPixels(), CAPTURE_WIDTH,CAPTURE_HEIGHT);
 #else
-//	if ( vidPlayer.isFrameNew() )
-//	frame_timer -= elapsed;
-	if ( true )
+	//	frame_timer -= elapsed;
+	//	if ( true )
+	if ( vidPlayer.isFrameNew() )
 	{
-		//frame_timer += FRAME_TIME;
-		printf("requested position %d\n", (long)(curr_frame) );
-		vidPlayer.setPosition((long)(++curr_frame)*12);
-		vidPlayer.idleMovie();
+		got = true;
 		
-		// force play every frame
-		static int prev_frame = -1;
-		int frame = (int)(vidPlayer.getPosition()*vidPlayer.getDuration()*25.0f);
-		if ( prev_frame != frame )
-		{
-			
-			prev_frame = frame;
-			
-			
-			printf("%f (%d)\n", vidPlayer.getPosition(), (int)(vidPlayer.getPosition()*vidPlayer.getDuration()*25.0f) );
-			int actual_frame = (int)(vidPlayer.getPosition()*vidPlayer.getDuration()*25.0f);
-			if ( actual_frame < frame/3 )
-				exit();
-				
-			captureImg.setFromPixels(vidPlayer.getPixels(), width*2, height*2 );
-			cvResize(captureImg.getCvImage(),colorImg.getCvImage());
-	#endif		
+		prev_frame = frame;
+		
+		captureImg.setFromPixels(vidPlayer.getPixels(), width*2, height*2 );
+		cvResize(captureImg.getCvImage(),colorImg.getCvImage());
+#endif
 
-			// convert to grayscale
-			grayImage.setFromColorImage(colorImg);
-	//		grayImage.contrastStretch();
-	//		grayImage.contrast( 8.0f, -900 );
-	//		grayImage.blurHeavily();
-	//		grayImage.blur();
+		// convert to grayscale
+		grayImage.setFromColorImage(colorImg);
+//		grayImage.contrastStretch();
+//		grayImage.contrast( 8.0f, -900 );
+//		grayImage.blurHeavily();
+//		grayImage.blur();
 
-			// to hsv
-			cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
-			cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
+		// to hsv
+		cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
+		cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
 
-			if (bLearnBakground == true){
-				grayBg = grayImage;		// the = sign copys the pixels from grayImage into grayBg (operator overloading)
-				pastImg = grayImage;
-				bLearnBakground = false;
-			}
-			
-			
-	//		grayDiff *= saturation;
-	//		grayDiff.contrast(4,0);
-
-	#ifdef KATHY
-			
-			cvResize( saturation.getCvImage(), grayDiffSmall.getCvImage(), CV_INTER_AREA );
-			grayDiffSmall.blurHeavily();
-			grayDiffSmall.contrast(2,0);
-	//		grayDiffSmall.contrast(3,-(256+64));
-			cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage(), CV_INTER_CUBIC );
-	#else
-			grayImage.contrast(2,0);
-			// take the abs value of the difference between background and incoming and then threshold:
-			grayDiff.absDiff(pastImg, grayImage);
-			// save old
+		if (bLearnBakground == true){
+			grayBg = grayImage;		// the = sign copys the pixels from grayImage into grayBg (operator overloading)
 			pastImg = grayImage;
-			cvResize( grayDiff.getCvImage(), grayDiffSmall.getCvImage() );
-			grayDiffSmall.blurHeavily();
-			grayDiffSmall.contrast(4,0);
-			cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
-			
-			
-			
-	#endif
-			
-			// now dump out
-			if ( dumping )
-			{
-				static int dump_frame = 0;
-				char filename[1024];
+			bLearnBakground = false;
+		}
+		
+		
+		grayImage.contrast(2,0);
+		// take the abs value of the difference between background and incoming and then threshold:
+		grayDiff.absDiff(pastImg, grayImage);
+		// save old
+		pastImg = grayImage;
+		cvResize( grayDiff.getCvImage(), grayDiffSmall.getCvImage() );
+		grayDiffSmall.blurHeavily();
+		grayDiffSmall.contrast(4,0);
+		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
+		
 
-				// diff
-				cvResize( grayDiff.getCvImage(), pre_dumper.getCvImage() );
-				dumper.setFromPixels( pre_dumper.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_GRAYSCALE );
-				sprintf(filename, "/tmp/diff_%03d.png", dump_frame );
-				dumper.saveImage( filename );
-				
-				// blurred diff
-				cvResize( grayDiffSmall.getCvImage(), pre_dumper.getCvImage() );
-				dumper.setFromPixels( pre_dumper.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_GRAYSCALE );
-				sprintf(filename, "/tmp/diff_blur_%03d.png", dump_frame );
-				dumper.saveImage( filename );
-				
-				// tiny blurred diff
-				cvResize( grayDiffTiny.getCvImage(), pre_dumper.getCvImage() );
-				dumper.setFromPixels( pre_dumper.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_GRAYSCALE );
-				sprintf(filename, "/tmp/diff_blur_tiny_%03d.png", dump_frame );
-				dumper.saveImage( filename );
-				
-				dumper.setFromPixels( grayImage.getPixels(), grayImage.width, grayImage.height, OF_IMAGE_COLOR );
+		
+		// now dump out
+		if ( dumping )
+		{
+			static int dump_frame = 0;
+			char filename[1024];
+
 			
-				dump_frame++;
-			}			
+			// blurred diff
+			cvResize( grayDiffSmall.getCvImage(), pre_dumper.getCvImage() );
+			cvCvtColor( pre_dumper.getCvImage(), pre_dumper_color.getCvImage(), CV_GRAY2BGR );
+			dumper.setFromPixels( pre_dumper_color.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
+			sprintf(filename, "/tmp/diff_blur_%03d.png", dump_frame );
+			dumper.saveImage( filename );
 			
-	//		grayDiffSmall.threshold(threshold);
+			// tiny blurred diff
+			cvResize( grayDiffTiny.getCvImage(), pre_dumper.getCvImage() );
+			cvCvtColor( pre_dumper.getCvImage(), pre_dumper_color.getCvImage(), CV_GRAY2BGR );
+			dumper.setFromPixels( pre_dumper_color.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
+			sprintf(filename, "/tmp/diff_blur_tiny_%03d.png", dump_frame );
+			dumper.saveImage( filename );
+
+			// diff
+			cvResize( grayDiff.getCvImage(), pre_dumper.getCvImage() );
+			cvCvtColor( pre_dumper.getCvImage(), pre_dumper_color.getCvImage(), CV_GRAY2BGR );
+			dumper.setFromPixels( pre_dumper_color.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
+			sprintf(filename, "/tmp/diff_%03d.png", dump_frame );
+			dumper.saveImage( filename );
 			
-			
-	/*		// take second-order diff
-			grayDiffDiff.absDiff( pastDiff, grayDiff );
-			// save old
-			pastDiff = grayDiff;
-			
-	//		grayDiffDiff.contrast(8,0);
-			grayDiffDiff.blur();*/
-			
-			
-			// find contours which are between the size of 20 pixels and 1/3 the w*h pixels.
-			// also, find holes is set to true so we will get interior contours as well....
-	//		contourFinder.findContours(grayDiff, 20, (width+20*height)/3, 10, true);	// find holes
-			
-			
-	/*		// printf("%p %p\n", pastImg.getCvImage(), grayImg.getCvImage());
-			cvCalcOpticalFlowBM(pastImg.getCvImage(), grayImage.getCvImage(), 
-								block, shift, max_range, 0, velx, vely);*/
-			
-			
-			// send osc
-			if ( first_frame )
-			{
-				first_frame = false;
-				return;
-			}
-			float activity = 0.0f;
-			unsigned char* pixels = grayDiffTiny.getPixels();
-			for ( int i=0; i< TINY_HEIGHT; i++ )
-			{
-				// one row at a time
-				ofOscMessage m;
-				m.setAddress( "/pixelrow" );
-				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
-				// row number
-				m.addIntArg( i );
-				// pixels
-				// all zeroes?
-				bool all_zeroes = true;
-				for ( int j=0; j<TINY_WIDTH; j++ )
-				{
-					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
-	#ifdef KATHY
-					//val = 1.0f-val;
-	#endif
-					val *= val;
-					activity += val;
-					if ( val > 0.0f || val < 0.0f )
-					{
-						all_zeroes = false;
-						m.addFloatArg( val );
-					}
-				}
-				if ( !all_zeroes )
-					osc_sender.sendMessage( m );
-			}
-			
-			// send total activity
-			activity /= TINY_HEIGHT*TINY_WIDTH;
-			ofOscMessage m_activity;
-			m_activity.setAddress( "/activity" );
-			m_activity.addFloatArg( activity );
-			osc_sender.sendMessage( m_activity );
-			
-			// send next bit of osc
+			dump_frame++;
+		}			
+		
+		
+		
+		// send osc
+		if ( first_frame )
+		{
+			first_frame = false;
+			return;
+		}
+		float activity = 0.0f;
+		message = "";
+		unsigned char* pixels = grayDiffTiny.getPixels();
+		for ( int i=0; i< TINY_HEIGHT; i++ )
+		{
+			// one row at a time
+			message += "/pixelrow ";
 			ofOscMessage m;
-			m.setAddress( "/pixelsum" );
-			// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
+			m.setAddress( "/pixelrow" );
+			// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
+			// row number
+			m.addIntArg( i );
+			char buf[128];
+			sprintf(buf, "%i ", i );
+			message += buf;
+			// pixels
+			// all zeroes?
+			bool all_zeroes = true;
 			for ( int j=0; j<TINY_WIDTH; j++ )
 			{
-				float total = 0.0f;
-				float centroid = 0.0f;
-				// sum the column
-				for ( int i=0; i<TINY_HEIGHT; i++ )
+				float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
+				val *= val;
+				activity += val;
+				if ( val > 0.0f || val < 0.0f )
 				{
-					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
-	#ifdef KATHY
-					//val = 1.0f-val;
-	#endif
-					total += val;
-					centroid += i*val;
+					all_zeroes = false;
+					m.addFloatArg( val );
+					sprintf(buf, "%f ", val );
+					message += buf;
 				}
-				centroid /= TINY_HEIGHT;
-				total /= TINY_HEIGHT;
-				
-				m.addFloatArg( centroid );
-				m.addFloatArg( total );
-	#ifdef KATHY
-				printf("%f %f ", centroid, total );
-	#endif
 			}
-			osc_sender.sendMessage( m );
-
-	#ifdef KATHY
-			printf(";\n");
-	#endif
+			if ( !all_zeroes )
+				osc_sender.sendMessage( m );
+			message += "\n";
+		}
+		
+		// send total activity
+		activity /= TINY_HEIGHT*TINY_WIDTH;
+		ofOscMessage m_activity;
+		m_activity.setAddress( "/activity" );
+		m_activity.addFloatArg( activity );
+		osc_sender.sendMessage( m_activity );
+		
+		// send next bit of osc
+		ofOscMessage m;
+		m.setAddress( "/pixelsum" );
+		// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
+		for ( int j=0; j<TINY_WIDTH; j++ )
+		{
+			float total = 0.0f;
+			float centroid = 0.0f;
+			// sum the column
+			for ( int i=0; i<TINY_HEIGHT; i++ )
+			{
+				float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
+				total += val;
+				centroid += i*val;
+			}
+			centroid /= TINY_HEIGHT;
+			total /= TINY_HEIGHT;
 			
-		}			
+			m.addFloatArg( centroid );
+			m.addFloatArg( total );
+		}
+		osc_sender.sendMessage( m );
+
 	}
 	else
 	{
@@ -411,10 +347,24 @@ void testApp::draw(){
 	}
 	else
 	{
-		captureImg.draw( 0, 0, 1024, 768 );
+		/*
+		if ( got )
+		{
+			//captureImg.draw( 0, 0, 1024, 768 );
+			ofSetColor( 0xffffff );
+			ofDrawBitmapString( message, 20, 460 );
+			glReadPixels( 0, 0, ofGetWidth(), ofGetHeight(), GL_RGB, GL_UNSIGNED_BYTE, fbo_pixels );
+			dumper.setFromPixels( fbo_pixels, ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR );
+			static int strings_frame = 0;
+			char buf[1024];
+			sprintf( buf, "/tmp/strings_%03d.png", strings_frame );
+			dumper.saveImage( buf );	
+			strings_frame++;
+		}*/
+		sleep(5);
 	}
 	
-	dumper.draw( 10, 10, 320, 240 );
+//	dumper.draw( 10, 10, 320, 240 );
 }
 
 

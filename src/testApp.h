@@ -6,7 +6,7 @@
 #include "ofOscSender.h"
 
 
-//#define CAM_CAPTURE
+#define CAM_CAPTURE
 
 //#define KATHY
 
@@ -50,7 +50,9 @@ class testApp : public ofSimpleApp{
 		// dumpage
 		bool dumping;
 		ofCvGrayscaleImage	pre_dumper;
+		ofCvColorImage	pre_dumper_color;
 		ofImage				dumper;
+		unsigned char* fbo_pixels;
 		
 		int 				threshold;
 		bool				bLearnBakground;
@@ -69,7 +71,8 @@ class testApp : public ofSimpleApp{
         CvSize max_range;
 		
 		bool draw_debug;
-		
+		bool got;
+		std::string message;
 		bool first_frame;
 		
 		ofOscSender osc_sender;
