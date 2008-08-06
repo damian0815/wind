@@ -47,6 +47,11 @@ class testApp : public ofSimpleApp{
 
 		ofCvContourFinder 	contourFinder;
 
+		// dumpage
+		bool dumping;
+		ofCvGrayscaleImage	pre_dumper;
+		ofImage				dumper;
+		
 		int 				threshold;
 		bool				bLearnBakground;
 		
@@ -65,6 +70,7 @@ class testApp : public ofSimpleApp{
 		
 		bool draw_debug;
 		
+		bool first_frame;
 		
 		ofOscSender osc_sender;
 		
