@@ -172,7 +172,8 @@ void testApp::update(){
 		}
 		
 		
-		grayImage.contrast(2,0);
+		// contrast
+		cvConvertScale( grayImage.getCvImage(), grayImage.getCvImage(), 2.0f, 0 );
 		// take the abs value of the difference between background and incoming and then threshold:
 		grayDiff.absDiff(pastImg, grayImage);
 		// save old
