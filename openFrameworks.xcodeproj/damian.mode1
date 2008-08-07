@@ -185,58 +185,7 @@
 	<key>Notifications</key>
 	<array/>
 	<key>OpenEditors</key>
-	<array>
-		<dict>
-			<key>Content</key>
-			<dict>
-				<key>PBXProjectModuleGUID</key>
-				<string>2DF29A3C0E4A7657009DFA87</string>
-				<key>PBXProjectModuleLabel</key>
-				<string>testApp.cpp</string>
-				<key>PBXSplitModuleInNavigatorKey</key>
-				<dict>
-					<key>Split0</key>
-					<dict>
-						<key>PBXProjectModuleGUID</key>
-						<string>2DF29A420E4A76E0009DFA87</string>
-						<key>PBXProjectModuleLabel</key>
-						<string>testApp.cpp</string>
-						<key>_historyCapacity</key>
-						<integer>0</integer>
-						<key>bookmark</key>
-						<string>2DF29A4B0E4A76E0009DFA87</string>
-						<key>history</key>
-						<array>
-							<string>2DF29A430E4A76E0009DFA87</string>
-							<string>2DF29A440E4A76E0009DFA87</string>
-							<string>2DF29A450E4A76E0009DFA87</string>
-						</array>
-						<key>prevStack</key>
-						<array>
-							<string>2DF29A460E4A76E0009DFA87</string>
-							<string>2DF29A470E4A76E0009DFA87</string>
-							<string>2DF29A480E4A76E0009DFA87</string>
-							<string>2DF29A490E4A76E0009DFA87</string>
-							<string>2DF29A4A0E4A76E0009DFA87</string>
-						</array>
-					</dict>
-					<key>SplitCount</key>
-					<string>1</string>
-				</dict>
-				<key>StatusBarVisibility</key>
-				<true/>
-			</dict>
-			<key>Geometry</key>
-			<dict>
-				<key>Frame</key>
-				<string>{{0, 20}, {929, 645}}</string>
-				<key>PBXModuleWindowStatusBarHidden2</key>
-				<false/>
-				<key>RubberWindowFrame</key>
-				<string>343 91 929 686 0 0 1280 778 </string>
-			</dict>
-		</dict>
-	</array>
+	<array/>
 	<key>PerspectiveWidths</key>
 	<array>
 		<integer>-1</integer>
@@ -310,15 +259,12 @@
 								<string>E4B69B4A0A3A1720003C02F2</string>
 								<string>E4B69E1C0A3A1BDC003C02F2</string>
 								<string>E4B69E160A3A1A8B003C02F2</string>
-								<string>E43121830C7DEC2700E7BC7C</string>
-								<string>2DE982D30DFEC7290072A937</string>
-								<string>E43121A10C7DEC2700E7BC7C</string>
 								<string>1C37FABC05509CD000000102</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>4</integer>
+									<integer>3</integer>
 									<integer>2</integer>
 									<integer>0</integer>
 								</array>
@@ -539,7 +485,7 @@
 	<key>PerspectivesBarVisible</key>
 	<false/>
 	<key>PinnedNavigatorIdentifier</key>
-	<string>2DF29A3C0E4A7657009DFA87</string>
+	<string>2DF29A6C0E4A8C69009DFA87</string>
 	<key>ShelfIsVisible</key>
 	<false/>
 	<key>SourceDescription</key>
@@ -568,7 +514,6 @@
 		<string>1C0AD2B3069F1EA900FABCE6</string>
 		<string>2DE982BF0DFEC6FF0072A937</string>
 		<string>/code/of_preRelease_v0.04_xcode/app/oespacograss/openFrameworks.xcodeproj</string>
-		<string>2DF29A3C0E4A7657009DFA87</string>
 	</array>
 	<key>WindowString</key>
 	<string>26 351 690 397 0 0 1280 778 </string>

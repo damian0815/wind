@@ -8,7 +8,7 @@
 			sepNavWindowFrame = "{{15, 11}, {929, 762}}";
 		};
 	};
-	2D7D4B760E49D8EB00DC654D /* testApp.cpp:149 */ = {
+	2D7D4B760E49D8EB00DC654D /* testApp.cpp:1 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -18,12 +18,12 @@
 		fileReference = E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */;
 		functionName = "testApp::update()";
 		hitCount = 1;
-		lineNumber = 149;
+		lineNumber = 1;
 		location = openFrameworksDebug;
 		modificationTime = 239723301.11368;
 		state = 1;
 	};
-	2D7D4B860E49DB0000DC654D /* testApp.cpp:149 */ = {
+	2D7D4B860E49DB0000DC654D /* testApp.cpp:1 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -33,7 +33,7 @@
 		fileReference = E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */;
 		functionName = "testApp::update()";
 		hitCount = 1;
-		lineNumber = 149;
+		lineNumber = 1;
 		location = openFrameworksDebug;
 		modificationTime = 239723301.113712;
 		state = 1;
@@ -126,7 +126,7 @@
 		fRef = E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */;
 		name = "testApp.cpp: 446";
 		rLen = 0;
-		rLoc = 10332;
+		rLoc = 11074;
 		rType = 0;
 		vrLen = 844;
 		vrLoc = 10021;
@@ -156,7 +156,7 @@
 		fRef = E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */;
 		name = "testApp.cpp: 173";
 		rLen = 0;
-		rLoc = 4822;
+		rLoc = 5564;
 		rType = 0;
 		vrLen = 1290;
 		vrLoc = 3830;
@@ -166,7 +166,7 @@
 		fRef = E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */;
 		name = "testApp.cpp: 173";
 		rLen = 0;
-		rLoc = 4822;
+		rLoc = 5564;
 		rType = 0;
 		vrLen = 1290;
 		vrLoc = 3830;
@@ -216,7 +216,7 @@
 		fRef = E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */;
 		name = "testApp.cpp: 177";
 		rLen = 0;
-		rLoc = 4917;
+		rLoc = 5659;
 		rType = 0;
 		vrLen = 1559;
 		vrLoc = 4311;
@@ -274,8 +274,8 @@
 			E4B69B5A0A3A1756003C02F2 /* openFrameworks */,
 		);
 		breakpoints = (
-			2D7D4B760E49D8EB00DC654D /* testApp.cpp:149 */,
-			2D7D4B860E49DB0000DC654D /* testApp.cpp:149 */,
+			2D7D4B760E49D8EB00DC654D /* testApp.cpp:1 */,
+			2D7D4B860E49DB0000DC654D /* testApp.cpp:1 */,
 			2D7D4B9A0E49E1B000DC654D /* ofCvGrayscaleImage.cpp:84 */,
 		);
 		codeSenseManager = 2DE982D10DFEC70E0072A937 /* Code sense */;
@@ -334,24 +334,24 @@
 	E4B69E1D0A3A1BDC003C02F2 /* main.cpp */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {884, 613}}";
-			sepNavSelRange = "{171, 0}";
+			sepNavSelRange = "{741, 0}";
 			sepNavVisRect = "{{0, 0}, {884, 613}}";
-			sepNavWindowFrame = "{{15, 4}, {929, 742}}";
+			sepNavWindowFrame = "{{343, 35}, {929, 742}}";
 		};
 	};
 	E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1034, 5782}}";
-			sepNavSelRange = "{4917, 0}";
-			sepNavVisRect = "{{0, 2221}, {884, 613}}";
-			sepNavWindowFrame = "{{343, 35}, {929, 742}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1034, 6104}}";
+			sepNavSelRange = "{740, 0}";
+			sepNavVisRect = "{{0, 0}, {884, 633}}";
+			sepNavWindowFrame = "{{15, 11}, {929, 762}}";
 		};
 	};
 	E4B69E1F0A3A1BDC003C02F2 /* testApp.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {884, 1162}}";
-			sepNavSelRange = "{106, 0}";
-			sepNavVisRect = "{{0, 0}, {884, 613}}";
+			sepNavIntBoundsRect = "{{0, 0}, {884, 1484}}";
+			sepNavSelRange = "{0, 737}";
+			sepNavVisRect = "{{0, 0}, {884, 633}}";
 			sepNavWindowFrame = "{{15, 11}, {929, 762}}";
 		};
 	};
