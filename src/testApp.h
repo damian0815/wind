@@ -25,8 +25,8 @@
 #define _TEST_APP
 
 #include "ofMain.h"
-#include "ofCvMain.h"
-#include "ofOscSender.h"
+#include "ofxCvMain.h"
+#include "ofxOscSender.h"
 
 
 #define CAM_CAPTURE
@@ -52,28 +52,28 @@ class testApp : public ofSimpleApp{
 #else
 		ofVideoPlayer		vidPlayer;
 #endif
-		ofCvGrayscaleImage 	grayImage;
-		ofCvGrayscaleImage	pastImg;
-		ofCvGrayscaleImage 	grayBg;
-		ofCvGrayscaleImage 	grayDiff;
-		ofCvGrayscaleImage 	grayDiffSmall;
-		ofCvGrayscaleImage 	grayDiffTiny;
-		ofCvGrayscaleImage	pastDiff;
-		ofCvGrayscaleImage 	grayDiffDiff;
-		ofCvColorImage		colorImg;
-		ofCvColorImage		captureImg;
-		ofCvColorImage		hsvImg;
+		ofxCvGrayscaleImage 	grayImage;
+		ofxCvGrayscaleImage	pastImg;
+		ofxCvGrayscaleImage 	grayBg;
+		ofxCvGrayscaleImage 	grayDiff;
+		ofxCvGrayscaleImage 	grayDiffSmall;
+		ofxCvGrayscaleImage 	grayDiffTiny;
+		ofxCvGrayscaleImage	pastDiff;
+		ofxCvGrayscaleImage 	grayDiffDiff;
+		ofxCvColorImage		colorImg;
+		ofxCvColorImage		captureImg;
+		ofxCvColorImage		hsvImg;
 		
-		ofCvGrayscaleImage	hue;
-		ofCvGrayscaleImage	saturation;
-		ofCvGrayscaleImage	value;
+		ofxCvGrayscaleImage	hue;
+		ofxCvGrayscaleImage	saturation;
+		ofxCvGrayscaleImage	value;
 
-		ofCvContourFinder 	contourFinder;
+		ofxCvContourFinder 	contourFinder;
 
 		// dumpage
 		bool dumping;
-		ofCvGrayscaleImage	pre_dumper;
-		ofCvColorImage	pre_dumper_color;
+		ofxCvGrayscaleImage	pre_dumper;
+		ofxCvColorImage	pre_dumper_color;
 		ofImage				dumper;
 		unsigned char* fbo_pixels;
 		
@@ -98,7 +98,7 @@ class testApp : public ofSimpleApp{
 		std::string message;
 		bool first_frame;
 		
-		ofOscSender osc_sender;
+		ofxOscSender osc_sender;
 		
 };
 

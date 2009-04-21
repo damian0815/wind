@@ -45,6 +45,7 @@ static int TINY_HEIGHT = 6;
 
 static int CAPTURE_WIDTH = 320;
 static int CAPTURE_HEIGHT = 240;
+static int CAPTURE_DEVICE = 6;
 
 const static int DUMP_FRAMESIZE_WIDTH = 720;
 static const int DUMP_FRAMESIZE_HEIGHT = 576;
@@ -55,12 +56,13 @@ const static int START_FRAME = 1500;
 //--------------------------------------------------------------
 void testApp::setup(){	 
 	
-	draw_debug = false;
+	draw_debug = true;
 	first_frame = true;
 	dumping = false;
 #ifdef CAM_CAPTURE
 	{
 		vidGrabber.setVerbose(true);
+		vidGrabber.setDeviceID( CAPTURE_DEVICE );
 		vidGrabber.initGrabber(CAPTURE_WIDTH, CAPTURE_HEIGHT);		// windows direct show users be careful
 											// some devices (dvcams, for example) don't 
 											// allow you to capture at this resolution. 
@@ -176,6 +178,7 @@ void testApp::update(){
 		captureImg.setFromPixels(vidPlayer.getPixels(), width*2, height*2 );
 		cvResize(captureImg.getCvImage(),colorImg.getCvImage());
 #endif
+//		printf("got frame\n");
 
 		// convert to grayscale
 		grayImage.setFromColorImage(colorImg);
@@ -254,7 +257,7 @@ void testApp::update(){
 		{
 			// one row at a time
 			message += "/pixelrow ";
-			ofOscMessage m;
+			ofxOscMessage m;
 			m.setAddress( "/pixelrow" );
 			// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
 			// row number
@@ -285,13 +288,13 @@ void testApp::update(){
 		
 		// send total activity
 		activity /= TINY_HEIGHT*TINY_WIDTH;
-		ofOscMessage m_activity;
+		ofxOscMessage m_activity;
 		m_activity.setAddress( "/activity" );
 		m_activity.addFloatArg( activity );
 		osc_sender.sendMessage( m_activity );
 		
 		// send next bit of osc
-		ofOscMessage m;
+		ofxOscMessage m;
 		m.setAddress( "/pixelsum" );
 		// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
 		for ( int j=0; j<TINY_WIDTH; j++ )
@@ -316,7 +319,8 @@ void testApp::update(){
 	}
 	else
 	{
-		sleep(20);
+//		printf("no frame, sleeping\n");
+//		sleep(20);
 	}
 }
 
@@ -371,6 +375,8 @@ void testApp::draw(){
 	}
 	else
 	{
+		ofSetColor( 0xff, 0xff, 0xff, 0xff );
+		colorImg.draw( 0, 0, ofGetWidth(), ofGetHeight() );
 		/*
 		if ( got )
 		{
@@ -385,7 +391,7 @@ void testApp::draw(){
 			dumper.saveImage( buf );	
 			strings_frame++;
 		}*/
-		sleep(5);
+//		sleep(5);
 	}
 	
 //	dumper.draw( 10, 10, 320, 240 );
@@ -405,10 +411,12 @@ void testApp::keyPressed  (int key){
 		case '+':
 			threshold ++;
 			if (threshold > 255) threshold = 255;
+			printf("threshold %i\n", threshold );
 			break;
 		case '-':
 			threshold --;
 			if (threshold < 0) threshold = 0;
+			printf("threshold %i\n", threshold );
 			break;
 		case 'd':
 			draw_debug = !draw_debug;
