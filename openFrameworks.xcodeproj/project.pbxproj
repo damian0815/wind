@@ -18,6 +18,10 @@
 		2D355B6F0F9DF3F300A5AC07 /* ofEventModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D355B670F9DF3F300A5AC07 /* ofEventModel.cpp */; };
 		2D355B700F9DF3F300A5AC07 /* ofKeyEvents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D355B690F9DF3F300A5AC07 /* ofKeyEvents.cpp */; };
 		2D355B710F9DF3F300A5AC07 /* ofMouseEvents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D355B6B0F9DF3F300A5AC07 /* ofMouseEvents.cpp */; };
+		2DCAD04E0FA05CF600BECF19 /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DCAD0440FA05CF600BECF19 /* tinyxml.cpp */; };
+		2DCAD04F0FA05CF600BECF19 /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DCAD0460FA05CF600BECF19 /* tinyxmlerror.cpp */; };
+		2DCAD0500FA05CF600BECF19 /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DCAD0470FA05CF600BECF19 /* tinyxmlparser.cpp */; };
+		2DCAD0510FA05CF600BECF19 /* ofxXmlSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DCAD0490FA05CF600BECF19 /* ofxXmlSettings.cpp */; };
 		E43121A80C7DEC2700E7BC7C /* ofAppRunner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E43121860C7DEC2700E7BC7C /* ofAppRunner.cpp */; };
 		E43121A90C7DEC2700E7BC7C /* ofSerial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E431218A0C7DEC2700E7BC7C /* ofSerial.cpp */; };
 		E43121AA0C7DEC2700E7BC7C /* ofGraphics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E431218D0C7DEC2700E7BC7C /* ofGraphics.cpp */; };
@@ -77,6 +81,12 @@
 		2D355B6A0F9DF3F300A5AC07 /* ofKeyEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofKeyEvents.h; sourceTree = "<group>"; };
 		2D355B6B0F9DF3F300A5AC07 /* ofMouseEvents.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofMouseEvents.cpp; sourceTree = "<group>"; };
 		2D355B6C0F9DF3F300A5AC07 /* ofMouseEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofMouseEvents.h; sourceTree = "<group>"; };
+		2DCAD0440FA05CF600BECF19 /* tinyxml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxml.cpp; sourceTree = "<group>"; };
+		2DCAD0450FA05CF600BECF19 /* tinyxml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tinyxml.h; sourceTree = "<group>"; };
+		2DCAD0460FA05CF600BECF19 /* tinyxmlerror.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxmlerror.cpp; sourceTree = "<group>"; };
+		2DCAD0470FA05CF600BECF19 /* tinyxmlparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxmlparser.cpp; sourceTree = "<group>"; };
+		2DCAD0490FA05CF600BECF19 /* ofxXmlSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxXmlSettings.cpp; sourceTree = "<group>"; };
+		2DCAD04A0FA05CF600BECF19 /* ofxXmlSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxXmlSettings.h; sourceTree = "<group>"; };
 		E411BE020CFA279F007A1F4A /* ofAddons.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ofAddons.h; path = ../../../addons/ofAddons.h; sourceTree = SOURCE_ROOT; };
 		E43121850C7DEC2700E7BC7C /* ofAppGlutGlue.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ofAppGlutGlue.h; path = ../../../libs/openFrameworks/app/ofAppGlutGlue.h; sourceTree = SOURCE_ROOT; };
 		E43121860C7DEC2700E7BC7C /* ofAppRunner.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ofAppRunner.cpp; path = ../../../libs/openFrameworks/app/ofAppRunner.cpp; sourceTree = SOURCE_ROOT; };
@@ -260,9 +270,39 @@
 			path = events;
 			sourceTree = "<group>";
 		};
+		2DCAD03D0FA05CF600BECF19 /* ofxXmlSettings */ = {
+			isa = PBXGroup;
+			children = (
+				2DCAD0430FA05CF600BECF19 /* libs */,
+				2DCAD0480FA05CF600BECF19 /* src */,
+			);
+			path = ofxXmlSettings;
+			sourceTree = "<group>";
+		};
+		2DCAD0430FA05CF600BECF19 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				2DCAD0440FA05CF600BECF19 /* tinyxml.cpp */,
+				2DCAD0450FA05CF600BECF19 /* tinyxml.h */,
+				2DCAD0460FA05CF600BECF19 /* tinyxmlerror.cpp */,
+				2DCAD0470FA05CF600BECF19 /* tinyxmlparser.cpp */,
+			);
+			path = libs;
+			sourceTree = "<group>";
+		};
+		2DCAD0480FA05CF600BECF19 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				2DCAD0490FA05CF600BECF19 /* ofxXmlSettings.cpp */,
+				2DCAD04A0FA05CF600BECF19 /* ofxXmlSettings.h */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 		E411BE010CFA279F007A1F4A /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				2DCAD03D0FA05CF600BECF19 /* ofxXmlSettings */,
 				2D355B050F9DF1C900A5AC07 /* ofxOsc */,
 				E411BE020CFA279F007A1F4A /* ofAddons.h */,
 				E489A5640DA165C800695191 /* ofxOpenCv */,
@@ -541,6 +581,10 @@
 				2D355B6F0F9DF3F300A5AC07 /* ofEventModel.cpp in Sources */,
 				2D355B700F9DF3F300A5AC07 /* ofKeyEvents.cpp in Sources */,
 				2D355B710F9DF3F300A5AC07 /* ofMouseEvents.cpp in Sources */,
+				2DCAD04E0FA05CF600BECF19 /* tinyxml.cpp in Sources */,
+				2DCAD04F0FA05CF600BECF19 /* tinyxmlerror.cpp in Sources */,
+				2DCAD0500FA05CF600BECF19 /* tinyxmlparser.cpp in Sources */,
+				2DCAD0510FA05CF600BECF19 /* ofxXmlSettings.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -616,6 +660,8 @@
 				CONFIGURATION_BUILD_DIR = "$(SRCROOT)";
 				COPY_PHASE_STRIP = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_MODEL_TUNING = "";
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;

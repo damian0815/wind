@@ -28,6 +28,13 @@
 #include "ofxCvMain.h"
 #include "ofxOscSender.h"
 
+//#define TINY_WIDTH 8
+//#define TINY_HEIGHT 6
+
+#define TINY_WIDTH 8
+#define TINY_HEIGHT 6
+
+
 
 #define CAM_CAPTURE
 
@@ -46,29 +53,41 @@ class testApp : public ofSimpleApp{
 		void mouseDragged(int x, int y, int button);
 		void mousePressed(int x, int y, int button);
 		void mouseReleased();
+	
+		void saveSettings();
+	
+	void calculateTiny( ofxCvGrayscaleImage& image );
 
-#ifdef CAM_CAPTURE
 		ofVideoGrabber 		vidGrabber;
-#else
 		ofVideoPlayer		vidPlayer;
-#endif
 		ofxCvGrayscaleImage 	grayImage;
 		ofxCvGrayscaleImage	pastImg;
+	ofxCvGrayscaleImage		grayImageContrasted;	
 		ofxCvGrayscaleImage 	grayBg;
 		ofxCvGrayscaleImage 	grayDiff;
 		ofxCvGrayscaleImage 	grayDiffSmall;
 		ofxCvGrayscaleImage 	grayDiffTiny;
+	
+//	ofxCvGrayscaleImage	grayDiffTiny_new;
+	
 		ofxCvGrayscaleImage	pastDiff;
 		ofxCvGrayscaleImage 	grayDiffDiff;
 		ofxCvColorImage		colorImg;
 		ofxCvColorImage		captureImg;
 		ofxCvColorImage		hsvImg;
 		
+		float contrast_1, contrast_2;
+		bool use_video;
+		string video_filename;
+		int capture_device;
+		string host; 
+		int	port;
+		int which_hsv_channel;
+	
+	
 		ofxCvGrayscaleImage	hue;
 		ofxCvGrayscaleImage	saturation;
 		ofxCvGrayscaleImage	value;
-
-		ofxCvContourFinder 	contourFinder;
 
 		// dumpage
 		bool dumping;
@@ -97,8 +116,13 @@ class testApp : public ofSimpleApp{
 		bool got;
 		std::string message;
 		bool first_frame;
-		
+	
+	float data_send_start_timer;
+	
 		ofxOscSender osc_sender;
+	
+	
+	unsigned char tiny[ TINY_WIDTH*TINY_HEIGHT ];
 		
 };
 

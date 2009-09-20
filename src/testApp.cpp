@@ -21,7 +21,11 @@
  */
 
 
+#define NEW_TINY
+
 #include "testApp.h"
+
+#include "ofxXmlSettings.h"
 
 //static char* MOVIE = "/Users/damian/4.archive/oespacograss/grass-silvery.mov";
 //static char* MOVIE = "/Users/damian/4.archive/oespacograss/grass-silvery-tiny.mp4";
@@ -37,21 +41,22 @@
 
 //static char* MOVIE = "/tmp/ram/grass-silvery.mov";
 
-static char* HOST = "localhost";
-static int PORT = 3020;
+const static string HOST = "localhost";
+const static int PORT = 3020;
 
-static int TINY_WIDTH = 8;
-static int TINY_HEIGHT = 6;
+const static int CAPTURE_WIDTH = 640;
+const static int CAPTURE_HEIGHT = 480;
+const static int CAPTURE_DEVICE = 6;
 
-static int CAPTURE_WIDTH = 320;
-static int CAPTURE_HEIGHT = 240;
-static int CAPTURE_DEVICE = 6;
+static const float DEFAULT_CONTRAST_1 = 2.0f;
+static const float DEFAULT_CONTRAST_2 = 8.0f;
 
 const static int DUMP_FRAMESIZE_WIDTH = 720;
 static const int DUMP_FRAMESIZE_HEIGHT = 576;
 
 const static int START_FRAME = 1500;
 
+const static float DATA_SEND_START_TIMER = 1.0f;
 
 //--------------------------------------------------------------
 void testApp::setup(){	 
@@ -59,7 +64,18 @@ void testApp::setup(){
 	draw_debug = true;
 	first_frame = true;
 	dumping = false;
-#ifdef CAM_CAPTURE
+	
+	ofxXmlSettings data;
+	data.loadFile( "settings.xml" );
+	data.pushTag( "app" );
+	contrast_1 = data.getValue("contrast_1", DEFAULT_CONTRAST_1 );
+	contrast_2 = data.getValue("contrast_2", DEFAULT_CONTRAST_2 );
+	use_video = data.getValue("input:use_video", 0 );
+	video_filename = data.getValue("input:video_filename", "" );
+	capture_device = data.getValue("input:capture_device", CAPTURE_DEVICE );
+	which_hsv_channel = data.getValue( "input:which_hsv_channel", 0 );
+	
+	if ( !use_video )
 	{
 		vidGrabber.setVerbose(true);
 		vidGrabber.setDeviceID( CAPTURE_DEVICE );
@@ -73,22 +89,22 @@ void testApp::setup(){
 		height = CAPTURE_HEIGHT;
 		vidGrabber.listDevices();
 	}
-#else
+	else
 	{
 		// load the movie
-		if ( !vidPlayer.loadMovie(MOVIE) )
+		if ( !vidPlayer.loadMovie(video_filename) )
 		{
-			fprintf( stderr, "error loading %s\n", MOVIE );
+			fprintf( stderr, "error loading %s\n", video_filename.c_str() );
 			::exit(1);
 		}
-		printf("movie %s loaded: size %i %i\n", MOVIE, vidPlayer.width, vidPlayer.height );
+		printf("movie %s loaded: size %i %i\n", video_filename.c_str(), vidPlayer.width, vidPlayer.height );
 		width = vidPlayer.width/2;
 		height = vidPlayer.height/2;
 		vidPlayer.setVolume( 0 );
 		vidPlayer.play();
-		vidPlayer.setSpeed(0);
+		//vidPlayer.setSpeed(0);
 	}		
-#endif
+
 	
 	if ( width > 500 )
 	{
@@ -104,6 +120,7 @@ void testApp::setup(){
 	colorImg.allocate(width, height);
 	captureImg.allocate(width*2,height*2);
 	grayImage.allocate(width, height);
+	grayImageContrasted.allocate(width, height);
 	grayBg.allocate(width, height);
 	grayDiff.allocate(width, height);
 	grayDiffDiff.allocate(width, height);
@@ -128,9 +145,13 @@ void testApp::setup(){
 	
 	fbo_pixels = (unsigned char*)malloc( ofGetWidth()*ofGetHeight()*3 );
 	
-	printf("opening OSC connection to %s:%i\n", HOST, PORT );
-	osc_sender.setup( HOST, PORT );
+	host = data.getValue( "osc:host", HOST );
+	port = data.getValue( "osc:port", PORT );
+	printf("opening OSC connection to %s:%i\n", host.c_str(), port );
+	osc_sender.setup( host, port );
 	
+	data_send_start_timer = DATA_SEND_START_TIMER;
+
 	
 	got = false;
 }
@@ -140,7 +161,7 @@ void testApp::setup(){
 //--------------------------------------------------------------
 
 
-static float last_time = ofGetElapsedTimef();
+static unsigned int prev_millis = ofGetElapsedTimeMillis();
 
 const static float FRAME_TIME = 1.0f/25.0f;
 static float frame_timer = FRAME_TIME;
@@ -149,48 +170,65 @@ static int curr_frame = START_FRAME*2;
 void testApp::update(){
 	ofBackground(100,100,100);
 	
-	float now = ofGetElapsedTimef();
-	float elapsed = now - last_time;
-	last_time = now;
+	unsigned int now_millis = ofGetElapsedTimeMillis();
+	unsigned int elapsed_millis = now_millis - prev_millis;
+	if ( elapsed_millis > 200 )
+		elapsed_millis = 200;
+	prev_millis = now_millis;
+	float elapsed = (float)elapsed_millis/1000.0f;
 	
-#ifdef CAM_CAPTURE
-	vidGrabber.grabFrame();
-#else
-	vidPlayer.idleMovie();
-
-#endif
+	if ( use_video )
+		vidPlayer.idleMovie();
+	else
+		vidGrabber.grabFrame();
 
 	got = false;
 
-#ifdef CAM_CAPTURE
-	if ( vidGrabber.isFrameNew() )
-	{
-		colorImg.setFromPixels(vidGrabber.getPixels(), CAPTURE_WIDTH,CAPTURE_HEIGHT);
-#else
-	//	frame_timer -= elapsed;
-	//	if ( true )
-	if ( vidPlayer.isFrameNew() )
+	bool frame = false;
+	if ( use_video )
+		frame = vidPlayer.isFrameNew();
+	else
+		frame = vidGrabber.isFrameNew();
+	
+	if ( frame )
 	{
 		got = true;
 		
-		prev_frame = frame;
-		
-		captureImg.setFromPixels(vidPlayer.getPixels(), width*2, height*2 );
-		cvResize(captureImg.getCvImage(),colorImg.getCvImage());
-#endif
-//		printf("got frame\n");
+		if ( use_video )
+		{
+			captureImg.setFromPixels(vidPlayer.getPixels(), width*2, height*2 );
+			cvResize(captureImg.getCvImage(),colorImg.getCvImage());
+		}
+		else
+		{
+			colorImg.setFromPixels(vidGrabber.getPixels(), CAPTURE_WIDTH,CAPTURE_HEIGHT);
+			cvRectangle(colorImg.getCvImage(), cvPoint(CAPTURE_WIDTH-(CAPTURE_WIDTH*0.16),0), cvPoint( CAPTURE_WIDTH,CAPTURE_HEIGHT), cvScalar( 0,0,0 ), CV_FILLED );
+		}
 
-		// convert to grayscale
-		grayImage.setFromColorImage(colorImg);
-//		grayImage.contrastStretch();
-//		grayImage.contrast( 8.0f, -900 );
-//		grayImage.blurHeavily();
-//		grayImage.blur();
+//		printf("got frame\n");
 
 		// to hsv
 		cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
 		cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
 
+		// convert to grayscale
+		if ( which_hsv_channel == 0 )
+		{
+			grayImage = hue;
+		}
+		else if ( which_hsv_channel == 1 )
+		{
+			grayImage = saturation;
+		}
+		else if ( which_hsv_channel == 2 )
+		{
+			grayImage = value;
+		}
+		else if ( which_hsv_channel == 3 )
+		{
+			grayImage.setFromColorImage(colorImg);
+		}
+		
 		if (bLearnBakground == true){
 			grayBg = grayImage;		// the = sign copys the pixels from grayImage into grayBg (operator overloading)
 			pastImg = grayImage;
@@ -199,17 +237,23 @@ void testApp::update(){
 		
 		
 		// contrast
-		cvConvertScale( grayImage.getCvImage(), grayImage.getCvImage(), 2.0f, 0 );
+		grayImage.contrast( contrast_1, 0 );
+		grayImageContrasted = grayImage;
 		// take the abs value of the difference between background and incoming and then threshold:
 		grayDiff.absDiff(pastImg, grayImage);
 		// save old
 		pastImg = grayImage;
 		cvResize( grayDiff.getCvImage(), grayDiffSmall.getCvImage() );
-		grayDiffSmall.blurHeavily();
-		grayDiffSmall.contrast(4,0);
-		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
+//		grayDiffSmall.blurHeavily();
 		
-
+#ifdef NEW_TINY
+		calculateTiny( grayDiffSmall );
+		grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
+#else
+		grayDiffSmall.blur(5);
+		grayDiffSmall.contrast( contrast_2,0);
+		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
+#endif
 		
 		// now dump out
 		if ( dumping )
@@ -250,72 +294,82 @@ void testApp::update(){
 			first_frame = false;
 			return;
 		}
-		float activity = 0.0f;
-		message = "";
-		unsigned char* pixels = grayDiffTiny.getPixels();
-		for ( int i=0; i< TINY_HEIGHT; i++ )
+		
+		if ( data_send_start_timer > 0.0f )
 		{
-			// one row at a time
-			message += "/pixelrow ";
+			data_send_start_timer -= elapsed;
+			printf("%f\n", data_send_start_timer );
+		}
+		else
+		{
+				
+				
+			float activity = 0.0f;
+			message = "";
+			unsigned char* pixels = grayDiffTiny.getPixels();
+			for ( int i=0; i< TINY_HEIGHT; i++ )
+			{
+				// one row at a time
+				message += "/pixelrow ";
+				ofxOscMessage m;
+				m.setAddress( "/pixelrow" );
+				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
+				// row number
+				m.addIntArg( i );
+				char buf[128];
+				sprintf(buf, "%i ", i );
+				message += buf;
+				// pixels
+				// all zeroes?
+				bool all_zeroes = true;
+				for ( int j=0; j<TINY_WIDTH; j++ )
+				{
+					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
+					val *= val;
+					activity += val;
+					if ( val > 0.0f || val < 0.0f )
+					{
+						all_zeroes = false;
+						m.addFloatArg( val );
+						sprintf(buf, "%f ", val );
+						message += buf;
+					}
+				}
+				if ( !all_zeroes )
+					osc_sender.sendMessage( m );
+				message += "\n";
+			}
+			
+			// send total activity
+			activity /= TINY_HEIGHT*TINY_WIDTH;
+			ofxOscMessage m_activity;
+			m_activity.setAddress( "/activity" );
+			m_activity.addFloatArg( activity );
+			osc_sender.sendMessage( m_activity );
+			
+			// send next bit of osc
 			ofxOscMessage m;
-			m.setAddress( "/pixelrow" );
-			// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
-			// row number
-			m.addIntArg( i );
-			char buf[128];
-			sprintf(buf, "%i ", i );
-			message += buf;
-			// pixels
-			// all zeroes?
-			bool all_zeroes = true;
+			m.setAddress( "/pixelsum" );
+			// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
 			for ( int j=0; j<TINY_WIDTH; j++ )
 			{
-				float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
-				val *= val;
-				activity += val;
-				if ( val > 0.0f || val < 0.0f )
+				float total = 0.0f;
+				float centroid = 0.0f;
+				// sum the column
+				for ( int i=0; i<TINY_HEIGHT; i++ )
 				{
-					all_zeroes = false;
-					m.addFloatArg( val );
-					sprintf(buf, "%f ", val );
-					message += buf;
+					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
+					total += val;
+					centroid += i*val;
 				}
+				centroid /= TINY_HEIGHT;
+				total /= TINY_HEIGHT;
+				
+				m.addFloatArg( centroid );
+				m.addFloatArg( total );
 			}
-			if ( !all_zeroes )
-				osc_sender.sendMessage( m );
-			message += "\n";
+			osc_sender.sendMessage( m );
 		}
-		
-		// send total activity
-		activity /= TINY_HEIGHT*TINY_WIDTH;
-		ofxOscMessage m_activity;
-		m_activity.setAddress( "/activity" );
-		m_activity.addFloatArg( activity );
-		osc_sender.sendMessage( m_activity );
-		
-		// send next bit of osc
-		ofxOscMessage m;
-		m.setAddress( "/pixelsum" );
-		// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
-		for ( int j=0; j<TINY_WIDTH; j++ )
-		{
-			float total = 0.0f;
-			float centroid = 0.0f;
-			// sum the column
-			for ( int i=0; i<TINY_HEIGHT; i++ )
-			{
-				float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
-				total += val;
-				centroid += i*val;
-			}
-			centroid /= TINY_HEIGHT;
-			total /= TINY_HEIGHT;
-			
-			m.addFloatArg( centroid );
-			m.addFloatArg( total );
-		}
-		osc_sender.sendMessage( m );
-
 	}
 	else
 	{
@@ -324,54 +378,55 @@ void testApp::update(){
 	}
 }
 
+void testApp::saveSettings()
+{
+	ofxXmlSettings data;
+	data.addTag( "app" );
+	data.pushTag( "app" );
+	
+	data.addValue( "contrast_1", contrast_1 );
+	data.addValue( "contrast_2", contrast_2 );
+
+	data.addTag( "input" );
+	data.pushTag("input");
+	data.addValue( "use_video", use_video?1:0 );
+	data.addValue( "video_filename", video_filename );
+	data.addValue( "capture_device", capture_device );
+	data.addValue( "which_hsv_channel", which_hsv_channel );
+	data.popTag();
+	
+	data.addTag("osc");
+	data.pushTag("osc");
+	data.addValue( "host", host );
+	data.addValue( "port", port );
+	data.popTag();
+
+	data.saveFile( "settings.xml" );
+}
+
 //--------------------------------------------------------------
 void testApp::draw(){
 
-
-/*    colorImg.draw(0,0);
-    grayImage.draw(320,0);
-    pastImg.draw(0,240);
-    
-    for(int y = 0; y < rows; y++){
-        for(int x = 0; x < cols; x++){
-            int dx = (int) cvGetReal2D (velx, y, x);
-            int dy = (int) cvGetReal2D (vely, y, x);
-            int xx = x * block_size;
-            int yy = y * block_size;
-            ofLine(xx, yy, xx + dx, yy + dy);
-        }
-    }*/
-	
 	if ( draw_debug )
 	{
 		// draw the incoming, the grayscale, the bg and the thresholded difference
 		ofSetColor(0xffffff);
-		colorImg.draw(20,20,draw_width, draw_height);	
-		grayDiffSmall.draw(draw_width+40,20,draw_width,draw_height);
-		saturation.draw(20,draw_height+40,draw_width,draw_height);
-		value.draw(draw_width+40,draw_height+40,draw_width,draw_height);
-		grayDiff.draw( 2*draw_width+80, 20, draw_width, draw_height );
-		grayDiffTiny.draw( 2*draw_width+80, draw_height+40, draw_width, draw_height );
-		
-		/*
-		// then draw the contours:
+		colorImg.draw(20,20,draw_width, draw_height );
+		grayImageContrasted.draw(draw_width+40,20,draw_width,draw_height);
 
-		ofFill();
-		ofSetColor(0x333333);
-		ofRect(width+80,draw_height+60,draw_width,draw_height);
-		ofSetColor(0xffffff);
-		glPushMatrix();
-			glTranslatef(360,540,0);
-			contourFinder.draw();
-		glPopMatrix();
-		 */
+//		saturation.draw(20,draw_height+40,draw_width,draw_height);
+//		value.draw(draw_width+40,draw_height+40,draw_width,draw_height);
+//		grayDiff.draw( 2*draw_width+80, 20, draw_width, draw_height );
+//		grayDiffTiny.draw( 2*draw_width+80, draw_height+40, draw_width, draw_height );
 		
+		grayDiff.draw( 20, draw_height+40, draw_width, draw_height );
+		grayDiffTiny.draw(draw_width+40, draw_height+40, draw_width, grayDiffTiny.height*((float)draw_width/grayDiffTiny.width) );
 		// finally, a report:
 
 		ofSetColor(0xffffff);
 		char reportStr[1024];
-		sprintf(reportStr, "bg subtraction and blob detection\npress ' ' to capture bg\nthreshold %i (press: +/-)\nnum blobs found %i", threshold, contourFinder.nBlobs);
-		ofDrawBitmapString(reportStr, 20, 600);
+		sprintf(reportStr, "contrast values: %0.2f (c/C)  %0.2f (r/R)", contrast_1, contrast_2 );
+		ofDrawBitmapString(reportStr, 20, ofGetHeight()-20);
 	}
 	else
 	{
@@ -402,27 +457,43 @@ void testApp::draw(){
 void testApp::keyPressed  (int key){ 
 	
 	switch (key){
-		case 's':
-//			vidGrabber.videoSettings();
+		case 'S':
+			vidGrabber.videoSettings();
 			break;
-		case ' ':
-			bLearnBakground = true;
+		case 'c':
+			contrast_1 *= 1.05f;
 			break;
-		case '+':
-			threshold ++;
-			if (threshold > 255) threshold = 255;
-			printf("threshold %i\n", threshold );
+		case 'C':
+			contrast_1 /= 1.05f;
 			break;
-		case '-':
-			threshold --;
-			if (threshold < 0) threshold = 0;
-			printf("threshold %i\n", threshold );
+		case 'r':
+			contrast_2 *= 1.05f;
+			break;
+		case 'R':
+			contrast_2 /= 1.05f;
 			break;
 		case 'd':
 			draw_debug = !draw_debug;
+			break;
+		case 'D':
 			dumping = !dumping;
 			break;
+		case 'h':
+			which_hsv_channel = 0;
+			break;
+		case 's':
+			which_hsv_channel = 1;
+			break;
+		case 'v':
+			which_hsv_channel = 2;
+			break;
+		case 'g':
+			which_hsv_channel = 3;
+			break;
+			
 	}
+	
+	saveSettings();
 }
 
 //--------------------------------------------------------------
@@ -439,5 +510,64 @@ void testApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void testApp::mouseReleased(){
+}
 
+
+void testApp::calculateTiny( ofxCvGrayscaleImage& img )
+{
+	
+	int img_cell_height = img.height/(TINY_HEIGHT+2);
+	int img_cell_width = img.width/(TINY_WIDTH+2);
+	
+	int img_row_count = img.height/img_cell_height;
+	int img_col_count = img.width/img_cell_width;
+	
+	unsigned char* pixels = img.getPixels();
+	
+	
+	for ( int i=1; i<img_row_count-1; i++ )
+	{
+		for ( int j=1; j<img_col_count-1; j++ )
+		{
+			// loop through everything in this cell, average, and max
+			int start_x = j*img_cell_width - img_cell_width/2;			
+			int end_x = start_x + 2.0f*img_cell_width;
+
+			int start_y = i*img_cell_height - img_cell_height/2;
+			int end_y = start_y + 2.0f*img_cell_height;
+			
+			float max = 0;
+			int total = 0;
+			for ( int u = start_y; u<end_y; u++ )
+			{
+				int base = u*img.width;
+				
+				// calculate u falloff factor
+				float u_factor = 1.0f-(2.0f*fabsf( ((float)(u-start_y))/(end_y-start_y) - 0.5f ));
+				
+				for ( int v = start_x; v<end_x; v++ )
+				{
+					// get value
+					int index = base + v;
+					float val = (float)pixels[index];
+					
+					// calculate v falloff facotr
+					float v_factor = 1.0f-(2.0f*fabsf( ((float)(v-start_x))/(end_x-start_x) - 0.5f ));
+					
+					// apply falloff factors
+					val *= (u_factor+v_factor);
+					
+					// average
+					total += val;
+					// max
+					if ( max < val )
+						max = val;
+				}
+			}
+			
+			float average = (float)total/(img_cell_height*img_cell_width*4);
+			
+			tiny[(i-1)*TINY_WIDTH+(j-1)] = (unsigned char)(average*0.5f+max*0.5f);
+		}
+	}
 }
