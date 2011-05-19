@@ -44,8 +44,8 @@
 const static string HOST = "localhost";
 const static int PORT = 3020;
 
-const static int CAPTURE_WIDTH = 640;
-const static int CAPTURE_HEIGHT = 480;
+const static int CAPTURE_WIDTH = 320;
+const static int CAPTURE_HEIGHT = 240;
 const static int CAPTURE_DEVICE = 6;
 
 static const float DEFAULT_CONTRAST_1 = 2.0f;
@@ -75,10 +75,14 @@ void testApp::setup(){
 	capture_device = data.getValue("input:capture_device", CAPTURE_DEVICE );
 	which_hsv_channel = data.getValue( "input:which_hsv_channel", 0 );
 	
+	ofSetLogLevel( OF_LOG_VERBOSE );
+
 	if ( !use_video )
 	{
 		vidGrabber.setVerbose(true);
-		vidGrabber.setDeviceID( CAPTURE_DEVICE );
+		ofLog(OF_LOG_VERBOSE, "opening capture device %i", capture_device );
+		vidGrabber.setDeviceID( capture_device );
+		vidGrabber.listDevices();
 		vidGrabber.initGrabber(CAPTURE_WIDTH, CAPTURE_HEIGHT);		// windows direct show users be careful
 											// some devices (dvcams, for example) don't 
 											// allow you to capture at this resolution. 
@@ -87,7 +91,6 @@ void testApp::setup(){
 											// most webcams, firewire cams and analog capture devices will support this resolution.
 		width = CAPTURE_WIDTH;
 		height = CAPTURE_HEIGHT;
-		vidGrabber.listDevices();
 	}
 	else
 	{
@@ -237,7 +240,11 @@ void testApp::update(){
 		
 		
 		// contrast
-		grayImage.contrast( contrast_1, 0 );
+		//grayImage.contrast( contrast_1, 0 );
+		cvConvertScale( grayImage.getCvImage(), grayImage.getCvImage(), contrast_1, 0 );
+		grayImage.flagImageChanged();
+
+
 		grayImageContrasted = grayImage;
 		// take the abs value of the difference between background and incoming and then threshold:
 		grayDiff.absDiff(pastImg, grayImage);
@@ -251,7 +258,10 @@ void testApp::update(){
 		grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
 #else
 		grayDiffSmall.blur(5);
-		grayDiffSmall.contrast( contrast_2,0);
+		//grayDiffSmall.contrast( contrast_2,0);
+		cvConvertScale( grayDiffSmall.getCvImage(), grayDiffSmall.getCvImage(), contrast_2, 0 );
+		grayDiffSmall.flagImageChanged();
+
 		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
 #endif
 		
@@ -410,7 +420,7 @@ void testApp::draw(){
 	if ( draw_debug )
 	{
 		// draw the incoming, the grayscale, the bg and the thresholded difference
-		ofSetColor(0xffffff);
+		ofSetHexColor(0xffffff);
 		colorImg.draw(20,20,draw_width, draw_height );
 		grayImageContrasted.draw(draw_width+40,20,draw_width,draw_height);
 
@@ -423,7 +433,7 @@ void testApp::draw(){
 		grayDiffTiny.draw(draw_width+40, draw_height+40, draw_width, grayDiffTiny.height*((float)draw_width/grayDiffTiny.width) );
 		// finally, a report:
 
-		ofSetColor(0xffffff);
+		ofSetHexColor(0xffffff);
 		char reportStr[1024];
 		sprintf(reportStr, "contrast values: %0.2f (c/C)  %0.2f (r/R)", contrast_1, contrast_2 );
 		ofDrawBitmapString(reportStr, 20, ofGetHeight()-20);
