@@ -1,4 +1,4 @@
-#N canvas 665 24 582 605 10;
+#N canvas 666 53 582 605 10;
 #X obj 93 74 unpackOSC;
 #X obj 225 57 playback;
 #X obj 92 104 routeOSC /pixelrow;
@@ -38,6 +38,7 @@
 #X obj 136 434 effects;
 #X msg 385 339 2.5;
 #X msg 464 45 32;
+#X obj 20 70 r pixels;
 #X connect 0 0 2 0;
 #X connect 1 0 2 0;
 #X connect 2 0 3 0;
@@ -92,3 +93,4 @@
 #X connect 36 1 22 1;
 #X connect 37 0 13 0;
 #X connect 38 0 28 0;
+#X connect 39 0 3 0;
