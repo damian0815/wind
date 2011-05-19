@@ -27,6 +27,7 @@
 #include "ofMain.h"
 #include "ofxCvMain.h"
 #include "ofxOscSender.h"
+#include "ofxPd.h"
 
 //#define TINY_WIDTH 8
 //#define TINY_HEIGHT 6
@@ -40,13 +41,15 @@
 
 //#define KATHY
 
-class testApp : public ofSimpleApp{
+class testApp : public ofBaseApp {
 
 	public:
+
 
 		void setup();
 		void update();
 		void draw();
+		void exit();
 
 		void keyPressed  (int key);
 		void mouseMoved(int x, int y );
@@ -55,14 +58,17 @@ class testApp : public ofSimpleApp{
 		void mouseReleased();
 	
 		void saveSettings();
+
+		void audioRequested( float* output, int bufferSize, int nChannels );
+		void audioReceived( float* input, int bufferSize, int nChannels );
 	
 	void calculateTiny( ofxCvGrayscaleImage& image );
 
 		ofVideoGrabber 		vidGrabber;
 		ofVideoPlayer		vidPlayer;
 		ofxCvGrayscaleImage 	grayImage;
-		ofxCvGrayscaleImage	pastImg;
-	ofxCvGrayscaleImage		grayImageContrasted;	
+		ofxCvGrayscaleImage		grayImageContrasted;	
+		ofxCvGrayscaleImage		pastImg;
 		ofxCvGrayscaleImage 	grayBg;
 		ofxCvGrayscaleImage 	grayDiff;
 		ofxCvGrayscaleImage 	grayDiffSmall;
@@ -89,13 +95,6 @@ class testApp : public ofSimpleApp{
 		ofxCvGrayscaleImage	saturation;
 		ofxCvGrayscaleImage	value;
 
-		// dumpage
-		bool dumping;
-		ofxCvGrayscaleImage	pre_dumper;
-		ofxCvColorImage	pre_dumper_color;
-		ofImage				dumper;
-		unsigned char* fbo_pixels;
-		
 		int 				threshold;
 		bool				bLearnBakground;
 		
@@ -114,15 +113,16 @@ class testApp : public ofSimpleApp{
 		
 		bool draw_debug;
 		bool got;
-		std::string message;
+		string message;
 		bool first_frame;
 	
 	float data_send_start_timer;
 	
-		ofxOscSender osc_sender;
+		ofxPd* pd;
 	
+		float mouse_x_pct, mouse_y_pct;
 	
-	unsigned char tiny[ TINY_WIDTH*TINY_HEIGHT ];
+	unsigned char* tiny;
 		
 };
 

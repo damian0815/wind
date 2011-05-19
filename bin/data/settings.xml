@@ -1,14 +1,14 @@
 <app>
-    <contrast_1>0.562482</contrast_1>
-    <contrast_2>8.819994</contrast_2>
+    <contrast_1>0.962035</contrast_1>
+    <contrast_2>8.399995</contrast_2>
     <input>
         <use_video>0</use_video>
-        <video_filename>/Users/damian/1.actions/wind_vuw_atrium_long.mov</video_filename>
+        <video_filename>honf-present.m4v</video_filename>
         <capture_device>1</capture_device>
         <which_hsv_channel>3</which_hsv_channel>
     </input>
     <osc>
-        <host>localhost</host>
-        <port>3020</port>
+        <host></host>
+        <port>-1082136436</port>
     </osc>
 </app>

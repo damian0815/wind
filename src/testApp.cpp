@@ -51,9 +51,6 @@ const static int CAPTURE_DEVICE = 6;
 static const float DEFAULT_CONTRAST_1 = 2.0f;
 static const float DEFAULT_CONTRAST_2 = 8.0f;
 
-const static int DUMP_FRAMESIZE_WIDTH = 720;
-static const int DUMP_FRAMESIZE_HEIGHT = 576;
-
 const static int START_FRAME = 1500;
 
 const static float DATA_SEND_START_TIMER = 1.0f;
@@ -61,9 +58,14 @@ const static float DATA_SEND_START_TIMER = 1.0f;
 //--------------------------------------------------------------
 void testApp::setup(){	 
 	
+	printf("testApp::setup: this %x", this );
+
+	tiny = (unsigned char*)malloc( TINY_WIDTH*TINY_HEIGHT );
+
 	draw_debug = true;
 	first_frame = true;
-	dumping = false;
+	mouse_x_pct = 0;
+	mouse_y_pct = 0;
 	
 	ofxXmlSettings data;
 	data.loadFile( "settings.xml" );
@@ -76,6 +78,14 @@ void testApp::setup(){
 	which_hsv_channel = data.getValue( "input:which_hsv_channel", 0 );
 	
 	ofSetLogLevel( OF_LOG_VERBOSE );
+
+	pd = new ofxPd();
+	pd->init( 0,2,44100 );
+	
+	ofSoundStreamSetup( 2,0,this, 44100, ofxPd::getBlockSize(), 4 );
+	
+	pd->openPatch( "sound1/_main.pd" );
+
 
 	if ( !use_video )
 	{
@@ -142,23 +152,25 @@ void testApp::setup(){
 	threshold = 30;
 	
 	
-	dumper.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
-	pre_dumper.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT );
-	pre_dumper_color.allocate( DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT );
-	
-	fbo_pixels = (unsigned char*)malloc( ofGetWidth()*ofGetHeight()*3 );
-	
-	host = data.getValue( "osc:host", HOST );
-	port = data.getValue( "osc:port", PORT );
-	printf("opening OSC connection to %s:%i\n", host.c_str(), port );
-	osc_sender.setup( host, port );
-	
 	data_send_start_timer = DATA_SEND_START_TIMER;
+
+
 
 	
 	got = false;
 }
 
+
+void testApp::exit()
+{
+	printf("in testApp::exit()\n");
+	free( tiny );
+	ofxPd* temp_pd = pd;
+	pd = NULL;
+	delete temp_pd;
+	printf("ready\n");
+	
+}
 
 
 //--------------------------------------------------------------
@@ -171,6 +183,15 @@ static float frame_timer = FRAME_TIME;
 static int curr_frame = START_FRAME*2;
 
 void testApp::update(){
+	
+	static bool pd_dsp_on = false;
+	if ( !pd_dsp_on && ofGetElapsedTimef() > 2.0f )
+	{
+		pd->dspOn();
+		pd_dsp_on = true;
+	}
+
+
 	ofBackground(100,100,100);
 	
 	unsigned int now_millis = ofGetElapsedTimeMillis();
@@ -205,7 +226,8 @@ void testApp::update(){
 		else
 		{
 			colorImg.setFromPixels(vidGrabber.getPixels(), CAPTURE_WIDTH,CAPTURE_HEIGHT);
-			cvRectangle(colorImg.getCvImage(), cvPoint(CAPTURE_WIDTH-(CAPTURE_WIDTH*0.16),0), cvPoint( CAPTURE_WIDTH,CAPTURE_HEIGHT), cvScalar( 0,0,0 ), CV_FILLED );
+			// mask out noisy pixels on the edge of the image
+			// cvRectangle(colorImg.getCvImage(), cvPoint(CAPTURE_WIDTH-(CAPTURE_WIDTH*0.16),0), cvPoint( CAPTURE_WIDTH,CAPTURE_HEIGHT), cvScalar( 0,0,0 ), CV_FILLED );
 		}
 
 //		printf("got frame\n");
@@ -265,37 +287,7 @@ void testApp::update(){
 		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
 #endif
 		
-		// now dump out
-		if ( dumping )
-		{
-			static int dump_frame = 0;
-			char filename[1024];
-
-			
-			// blurred diff
-			cvResize( grayDiffSmall.getCvImage(), pre_dumper.getCvImage() );
-			cvCvtColor( pre_dumper.getCvImage(), pre_dumper_color.getCvImage(), CV_GRAY2BGR );
-			dumper.setFromPixels( pre_dumper_color.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
-			sprintf(filename, "/tmp/diff_blur_%03d.png", dump_frame );
-			dumper.saveImage( filename );
-			
-			// tiny blurred diff
-			cvResize( grayDiffTiny.getCvImage(), pre_dumper.getCvImage() );
-			cvCvtColor( pre_dumper.getCvImage(), pre_dumper_color.getCvImage(), CV_GRAY2BGR );
-			dumper.setFromPixels( pre_dumper_color.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
-			sprintf(filename, "/tmp/diff_blur_tiny_%03d.png", dump_frame );
-			dumper.saveImage( filename );
-
-			// diff
-			cvResize( grayDiff.getCvImage(), pre_dumper.getCvImage() );
-			cvCvtColor( pre_dumper.getCvImage(), pre_dumper_color.getCvImage(), CV_GRAY2BGR );
-			dumper.setFromPixels( pre_dumper_color.getPixels(), DUMP_FRAMESIZE_WIDTH, DUMP_FRAMESIZE_HEIGHT, OF_IMAGE_COLOR );
-			sprintf(filename, "/tmp/diff_%03d.png", dump_frame );
-			dumper.saveImage( filename );
-			
-			dump_frame++;
-		}			
-		
+	
 		
 		
 		// send osc
@@ -321,11 +313,11 @@ void testApp::update(){
 			{
 				// one row at a time
 				message += "/pixelrow ";
-				ofxOscMessage m;
-				m.setAddress( "/pixelrow" );
+				pd->startList( "pixels" );
+				pd->addSymbol( "/pixelrow" );
 				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
 				// row number
-				m.addIntArg( i );
+				pd->addFloat( i );
 				char buf[128];
 				sprintf(buf, "%i ", i );
 				message += buf;
@@ -340,26 +332,32 @@ void testApp::update(){
 					if ( val > 0.0f || val < 0.0f )
 					{
 						all_zeroes = false;
-						m.addFloatArg( val );
+						pd->addFloat( val );
 						sprintf(buf, "%f ", val );
 						message += buf;
 					}
 				}
-				if ( !all_zeroes )
-					osc_sender.sendMessage( m );
 				message += "\n";
+				if ( !all_zeroes )
+				{
+//					ofLog( OF_LOG_VERBOSE, "pd->finish() should send %s", message.c_str() );
+					pd->finish();
+				}
+				// no need to abort pd messages/lists
 			}
 			
 			// send total activity
 			activity /= TINY_HEIGHT*TINY_WIDTH;
-			ofxOscMessage m_activity;
-			m_activity.setAddress( "/activity" );
-			m_activity.addFloatArg( activity );
-			osc_sender.sendMessage( m_activity );
+
+			pd->startList( "pixels" );
+			pd->addSymbol( "/activity" );
+			pd->addFloat( activity );
+			pd->finish();
+
 			
 			// send next bit of osc
-			ofxOscMessage m;
-			m.setAddress( "/pixelsum" );
+			pd->startList( "pixels" );
+			pd->addSymbol( "/pixelsum" );
 			// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
 			for ( int j=0; j<TINY_WIDTH; j++ )
 			{
@@ -375,10 +373,10 @@ void testApp::update(){
 				centroid /= TINY_HEIGHT;
 				total /= TINY_HEIGHT;
 				
-				m.addFloatArg( centroid );
-				m.addFloatArg( total );
+				pd->addFloat( centroid );
+				pd->addFloat( total );
 			}
-			osc_sender.sendMessage( m );
+			pd->finish();
 		}
 	}
 	else
@@ -442,24 +440,8 @@ void testApp::draw(){
 	{
 		ofSetColor( 0xff, 0xff, 0xff, 0xff );
 		colorImg.draw( 0, 0, ofGetWidth(), ofGetHeight() );
-		/*
-		if ( got )
-		{
-			//captureImg.draw( 0, 0, 1024, 768 );
-			ofSetColor( 0xffffff );
-			ofDrawBitmapString( message, 20, 460 );
-			glReadPixels( 0, 0, ofGetWidth(), ofGetHeight(), GL_RGB, GL_UNSIGNED_BYTE, fbo_pixels );
-			dumper.setFromPixels( fbo_pixels, ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR );
-			static int strings_frame = 0;
-			char buf[1024];
-			sprintf( buf, "/tmp/strings_%03d.png", strings_frame );
-			dumper.saveImage( buf );	
-			strings_frame++;
-		}*/
-//		sleep(5);
 	}
 	
-//	dumper.draw( 10, 10, 320, 240 );
 }
 
 
@@ -485,9 +467,6 @@ void testApp::keyPressed  (int key){
 		case 'd':
 			draw_debug = !draw_debug;
 			break;
-		case 'D':
-			dumping = !dumping;
-			break;
 		case 'h':
 			which_hsv_channel = 0;
 			break;
@@ -508,6 +487,8 @@ void testApp::keyPressed  (int key){
 
 //--------------------------------------------------------------
 void testApp::mouseMoved(int x, int y ){
+	mouse_x_pct = float(x-(draw_width+40))/draw_width;
+	mouse_y_pct = float(y-(draw_height+40))/draw_height;
 }	
 
 //--------------------------------------------------------------
@@ -522,7 +503,20 @@ void testApp::mousePressed(int x, int y, int button){
 void testApp::mouseReleased(){
 }
 
+//--------------------------------------------------------------
+void testApp::audioReceived(float * input, int bufferSize, int nChannels) {
+	if ( pd )
+	    pd->audioIn(input, bufferSize, nChannels);
+}
 
+//--------------------------------------------------------------
+void testApp::audioRequested(float * output, int bufferSize, int nChannels) {
+	if ( pd )
+	    pd->audioOut(output, bufferSize, nChannels);
+}
+
+
+//--------------------------------------------------------------
 void testApp::calculateTiny( ofxCvGrayscaleImage& img )
 {
 	
@@ -533,8 +527,15 @@ void testApp::calculateTiny( ofxCvGrayscaleImage& img )
 	int img_col_count = img.width/img_cell_width;
 	
 	unsigned char* pixels = img.getPixels();
-	
-	
+
+	int tx=-1;
+	int ty=-1;	
+	if ( mouse_x_pct >= 0.0f && mouse_x_pct <= 1.0f && mouse_y_pct >= 0.0f && mouse_y_pct <= 1.0f )
+	{
+		tx = mouse_x_pct*TINY_WIDTH;
+		ty = mouse_y_pct*TINY_HEIGHT;
+	}
+
 	for ( int i=1; i<img_row_count-1; i++ )
 	{
 		for ( int j=1; j<img_col_count-1; j++ )
@@ -576,8 +577,11 @@ void testApp::calculateTiny( ofxCvGrayscaleImage& img )
 			}
 			
 			float average = (float)total/(img_cell_height*img_cell_width*4);
-			
-			tiny[(i-1)*TINY_WIDTH+(j-1)] = (unsigned char)(average*0.5f+max*0.5f);
+		
+			if ( i-1 == ty && j-1 == tx )
+				tiny[(i-1)*TINY_WIDTH+(j-1)] = 255;
+			else
+				tiny[(i-1)*TINY_WIDTH+(j-1)] = (unsigned char)(average*0.5f+max*0.5f);
 		}
 	}
 }

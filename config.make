@@ -10,20 +10,20 @@ OF_ROOT = ../../..
 # for example search paths like:
 # USER_CFLAGS = -I src/objects
 
-USER_CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY --export-dynamic -shared -ldl -lm
+USER_CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -shared
 
 
 # USER_LDFLAGS allows to pass custom flags to the linker
 # for example libraries like:
 # USER_LDFLAGS = libs/libawesomelib.a
 
-USER_LDFLAGS =
+USER_LDFLAGS = --export-dynamic
 
 
 # use this to add system libraries for example:
 # USER_LIBS = -lpango
 
-USER_LIBS =
+USER_LIBS = -ldl -lm
 
 
 # change this to add different compiler optimizations to your project
