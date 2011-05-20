@@ -104,6 +104,10 @@ class testApp : public ofBaseApp {
 		int rows, cols;
         int block_size;
         int shift_size;
+
+		int stride;
+		int offset;
+		float step;
 		
         
         CvMat *velx, *vely;

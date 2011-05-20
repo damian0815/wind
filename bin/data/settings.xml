@@ -1,6 +1,9 @@
 <app>
-    <contrast_1>0.962035</contrast_1>
-    <contrast_2>8.399995</contrast_2>
+    <contrast_1>0.916224</contrast_1>
+    <contrast_2>8.399996</contrast_2>
+    <stride>6</stride>
+    <offset>0</offset>
+    <step>1.0000</step>
     <input>
         <use_video>0</use_video>
         <video_filename>honf-present.m4v</video_filename>
@@ -9,6 +12,6 @@
     </input>
     <osc>
         <host></host>
-        <port>-1082136436</port>
+        <port>1</port>
     </osc>
 </app>

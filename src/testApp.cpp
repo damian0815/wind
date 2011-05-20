@@ -50,6 +50,9 @@ const static int CAPTURE_DEVICE = 6;
 
 static const float DEFAULT_CONTRAST_1 = 2.0f;
 static const float DEFAULT_CONTRAST_2 = 8.0f;
+static const int DEFAULT_STRIDE = 6;
+static const int DEFAULT_OFFSET = 0;
+static const float DEFAULT_STEP = 1.0f;
 
 const static int START_FRAME = 1500;
 
@@ -64,14 +67,18 @@ void testApp::setup(){
 
 	draw_debug = true;
 	first_frame = true;
-	mouse_x_pct = 0;
-	mouse_y_pct = 0;
+	mouse_x_pct = -1;
+	mouse_y_pct = -1;
+
 	
 	ofxXmlSettings data;
 	data.loadFile( "settings.xml" );
 	data.pushTag( "app" );
 	contrast_1 = data.getValue("contrast_1", DEFAULT_CONTRAST_1 );
 	contrast_2 = data.getValue("contrast_2", DEFAULT_CONTRAST_2 );
+	stride = data.getValue( "stride", DEFAULT_STRIDE );
+	offset = data.getValue( "offset", DEFAULT_OFFSET );
+	step = data.getValue( "step", DEFAULT_STEP );
 	use_video = data.getValue("input:use_video", 0 );
 	video_filename = data.getValue("input:video_filename", "" );
 	capture_device = data.getValue("input:capture_device", CAPTURE_DEVICE );
@@ -309,6 +316,11 @@ void testApp::update(){
 			float activity = 0.0f;
 			message = "";
 			unsigned char* pixels = grayDiffTiny.getPixels();
+
+			// stride will affect the way the pixels are distributed to oscillators
+			static const int TOTAL_PIXELS=TINY_WIDTH*TINY_HEIGHT;
+
+
 			for ( int i=0; i< TINY_HEIGHT; i++ )
 			{
 				// one row at a time
@@ -326,7 +338,7 @@ void testApp::update(){
 				bool all_zeroes = true;
 				for ( int j=0; j<TINY_WIDTH; j++ )
 				{
-					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
+					float val = (float)pixels[(offset+i*stride+int(step*j))%TOTAL_PIXELS]/255.0f;
 					val *= val;
 					activity += val;
 					if ( val > 0.0f || val < 0.0f )
@@ -394,6 +406,9 @@ void testApp::saveSettings()
 	
 	data.addValue( "contrast_1", contrast_1 );
 	data.addValue( "contrast_2", contrast_2 );
+	data.addValue( "stride", stride );
+	data.addValue( "offset", offset );
+	data.addValue( "step", step );
 
 	data.addTag( "input" );
 	data.pushTag("input");
@@ -432,8 +447,8 @@ void testApp::draw(){
 		// finally, a report:
 
 		ofSetHexColor(0xffffff);
-		char reportStr[1024];
-		sprintf(reportStr, "contrast values: %0.2f (c/C)  %0.2f (r/R)", contrast_1, contrast_2 );
+		char reportStr[1024]; 
+		sprintf(reportStr, "contrast values: %0.2f (c/C)  %0.2f (r/R)  stride: %3i offs: %3i step: %5.2f", contrast_1, contrast_2, stride, offset, step );
 		ofDrawBitmapString(reportStr, 20, ofGetHeight()-20);
 	}
 	else
@@ -449,7 +464,7 @@ void testApp::draw(){
 void testApp::keyPressed  (int key){ 
 	
 	switch (key){
-		case 'S':
+		case 'v':
 			vidGrabber.videoSettings();
 			break;
 		case 'c':
@@ -467,7 +482,7 @@ void testApp::keyPressed  (int key){
 		case 'd':
 			draw_debug = !draw_debug;
 			break;
-		case 'h':
+/*		case 'h':
 			which_hsv_channel = 0;
 			break;
 		case 's':
@@ -478,6 +493,35 @@ void testApp::keyPressed  (int key){
 			break;
 		case 'g':
 			which_hsv_channel = 3;
+			break;*/
+		case 's':
+			stride ++;
+			break;
+		case 'S':
+			stride --;
+			if ( stride <= 0 )
+				stride = 1;
+			break;
+		case 'o':
+			offset ++;
+			break;
+		case 'O':
+			offset --;
+			if ( offset < 0 )
+				offset = 0;
+			break;
+		case 't':
+			step += 0.25f;
+			break;
+		case 'T':
+			step -= 0.25f;
+			if ( step < 1 )
+				step = 1;
+			break;
+
+
+
+		default:
 			break;
 			
 	}

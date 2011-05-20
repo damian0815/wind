@@ -1,4 +1,4 @@
-#N canvas 1293 537 483 353 10;
+#N canvas 1295 566 492 456 10;
 #X obj 31 206 osc~;
 #X obj 57 289 *~;
 #X obj 33 149 mtof;
@@ -13,7 +13,7 @@
 #X obj 37 34 loadbang;
 #X obj 107 171 *;
 #X obj 243 30 r smoothtime;
-#X obj 141 80 r sensitivity;
+#X obj 148 80 r sensitivity;
 #X obj 126 104 * 1;
 #X obj 203 156 f \$2;
 #X obj 214 129 loadbang;
@@ -26,12 +26,18 @@
 #X obj 289 228 line~;
 #X text 277 245 smooth fade out if no new data;
 #X msg 290 206 1 \, 0 10000;
+#X obj 158 358 f;
+#X obj 201 282 change;
+#X obj 201 304 sel 1;
+#X obj 202 256 > 0.98;
+#X obj 158 395 print note\$1;
 #X connect 0 0 1 0;
 #X connect 1 0 7 0;
 #X connect 2 0 5 0;
 #X connect 3 0 10 0;
 #X connect 4 0 21 0;
 #X connect 5 0 0 0;
+#X connect 5 0 27 1;
 #X connect 6 0 23 0;
 #X connect 8 0 9 0;
 #X connect 9 0 10 1;
@@ -49,8 +55,13 @@
 #X connect 20 0 15 0;
 #X connect 21 0 20 0;
 #X connect 21 1 15 0;
+#X connect 21 1 30 0;
 #X connect 22 0 12 0;
 #X connect 22 0 12 1;
 #X connect 23 0 1 1;
 #X connect 24 0 23 1;
 #X connect 26 0 24 0;
+#X connect 27 0 31 0;
+#X connect 28 0 29 0;
+#X connect 29 0 27 0;
+#X connect 30 0 28 0;
