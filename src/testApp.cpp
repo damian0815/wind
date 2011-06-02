@@ -163,7 +163,7 @@ void testApp::setup(){
 	data_send_start_timer = DATA_SEND_START_TIMER;
 
 
-#if defined NO_WINDOW && defined TARGET_LINUX
+#ifdef SCREEN
 	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL );
 #endif
 
@@ -298,7 +298,7 @@ void testApp::update(){
 		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
 #endif
 		
-	
+
 		
 		
 		// send osc
@@ -400,6 +400,18 @@ void testApp::update(){
 //		printf("no frame, sleeping\n");
 //		sleep(20);
 	}
+#ifdef SCREEN
+
+	ofLog(OF_LOG_NOTICE, "drawing to screen");
+
+	for ( int i=0; i<TINY_WIDTH*TINY_HEIGHT; i++ )
+	{
+		static uint8_t whitchy = 0;
+		tiny[i] = (whitchy++);
+	}
+	screen.display( 10, 10, TINY_WIDTH/2, TINY_HEIGHT, tiny );
+#endif
+	
 }
 
 void testApp::saveSettings()

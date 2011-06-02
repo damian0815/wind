@@ -31,6 +31,7 @@
 #define NO_WINDOW
 
 #if defined NO_WINDOW && defined TARGET_LINUX
+#define SCREEN
 #include "WatterottScreen.h"
 #endif
 
@@ -132,7 +133,7 @@ class testApp : public ofBaseApp {
 	
 	unsigned char* tiny;
 	
-#if defined NO_WINDOW && defined TARGET_LINUX
+#ifdef SCREEN
 	WatterottScreen screen;
 #endif
 

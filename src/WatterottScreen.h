@@ -27,7 +27,7 @@ class WatterottScreen
 		void reset();
 		
 		// tx (and rx if specified) should be count bytes long
-		int writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd=true, uint8_t* rx=NULL );
+		int writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd=true, uint8_t* rx=NULL, uint32_t override_speed=0 );
 		int readCommand( uint8_t cmd, uint8_t &result );
 		int writeCommand( uint8_t cmd, uint8_t arg );
 		int writeData( uint8_t* data, int count );
