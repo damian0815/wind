@@ -163,6 +163,9 @@ void testApp::setup(){
 	data_send_start_timer = DATA_SEND_START_TIMER;
 
 
+#if defined NO_WINDOW && defined TARGET_LINUX
+	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL );
+#endif
 
 	
 	got = false;
@@ -431,6 +434,7 @@ void testApp::saveSettings()
 //--------------------------------------------------------------
 void testApp::draw(){
 
+	printf("draw\n");
 	if ( draw_debug )
 	{
 		// draw the incoming, the grayscale, the bg and the thresholded difference

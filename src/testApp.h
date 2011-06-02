@@ -30,6 +30,9 @@
 
 #define NO_WINDOW
 
+#if defined NO_WINDOW && defined TARGET_LINUX
+#include "WatterottScreen.h"
+#endif
 
 //#define TINY_WIDTH 8
 //#define TINY_HEIGHT 6
@@ -128,7 +131,11 @@ class testApp : public ofBaseApp {
 		float mouse_x_pct, mouse_y_pct;
 	
 	unsigned char* tiny;
-		
+	
+#if defined NO_WINDOW && defined TARGET_LINUX
+	WatterottScreen screen;
+#endif
+
 };
 
 #endif
