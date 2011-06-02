@@ -1,5 +1,4 @@
 ofxOpenCv
 ofxXmlSettings
-ofxOsc
 ofxPd
 
