@@ -24,12 +24,18 @@
 #include "ofMain.h"
 #include "testApp.h"
 #include "unistd.h"
+#include "ofAppNoWindow.h"
 
 //========================================================================
 int main( ){
-	
-	ofSetupOpenGL(700, 560, OF_WINDOW);			// <-------- setup the GL context
-	
+
+#ifdef NO_WINDOW 
+	ofAppNoWindow window;	
+#else
+	ofAppGlutWindow window;
+#endif
+	ofSetupOpenGL(&window, 700, 560, OF_WINDOW);			// <-------- setup the GL context
+
 	// this is my "app" :
 	testApp APP;
 	

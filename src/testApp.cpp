@@ -70,6 +70,7 @@ void testApp::setup(){
 	mouse_x_pct = -1;
 	mouse_y_pct = -1;
 
+	ofSetFrameRate( 25.0f );
 	
 	ofxXmlSettings data;
 	data.loadFile( "settings.xml" );

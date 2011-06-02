@@ -26,15 +26,16 @@
 
 #include "ofMain.h"
 #include "ofxCvMain.h"
-#include "ofxOscSender.h"
 #include "ofxPd.h"
+
+#define NO_WINDOW
+
 
 //#define TINY_WIDTH 8
 //#define TINY_HEIGHT 6
 
 #define TINY_WIDTH 8
 #define TINY_HEIGHT 6
-
 
 
 #define CAM_CAPTURE
