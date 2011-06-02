@@ -409,7 +409,9 @@ void testApp::update(){
 		static uint8_t whitchy = 0;
 		tiny[i] = (whitchy++);
 	}
-	screen.display( 10, 10, TINY_WIDTH/2, TINY_HEIGHT, tiny );
+	screen.display8( 10, 10, 
+			grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
+			grayDiffSmall.getPixels() );
 #endif
 	
 }

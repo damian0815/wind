@@ -54,7 +54,36 @@ WatterottScreen::WatterottScreen( )
 {
 }
 
-void WatterottScreen::display( int x0, int y0, int w, int h, uint8_t* pixels )
+void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels )
+{
+	static uint8_t* pixels565 = NULL;
+	static size_t pixels565_size = 0;
+
+	if ( w*h*2 > pixels565_size )
+	{
+		if ( pixels565==NULL )
+			pixels565 = (uint8_t*)malloc( w*h*2 );
+		else
+			pixels565 = (uint8_t*)realloc( pixels565, w*h*2 );
+		pixels565_size = w*h*2;
+	}
+
+	// convert 8 to 565
+	uint8_t* source = pixels;
+	uint8_t* dest = pixels565;
+	for ( int i=0; i<w*h; i++ )
+	{
+		uint8_t g = source[i];
+		(*dest++) =  (g&0b11111000) | (g >> 5);
+		(*dest++) = ((g&0b11111100) << 5) | (g >> 3);
+	}
+
+	// display
+	display565( x0, y0, w, h, pixels565 );
+
+}
+
+void WatterottScreen::display565( int x0, int y0, int w, int h, uint8_t* pixels )
 {
 	int x1 = x0+w-1;
 	int y1 = y0+h-1;

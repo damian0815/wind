@@ -14,9 +14,13 @@ class WatterottScreen
 		/// open ioctl to device (eg /dev/spidev3.1), with given mode
 		/// (eg SPI_CPHA | SPI_CPOL); communicate at given speed (bps)
 		bool setup( const char* device, uint8_t mode=0, uint32_t speed=500000 );
+
 		/// display pixels at x0, y0 on the screen. pixels is w*h*2 
 		/// bytes long, 5-6-5 format as returned by rgb565()
-		void display( int x0, int y0, int w, int h, uint8_t* pixels );
+		void display565( int x0, int y0, int w, int h, uint8_t* pixels );
+
+		/// as display565 but pixels are w*h bytes long (grayscale, 8 bit)
+		void display8( int x0, int y0, int w, int h, uint8_t* pixels );
 
 		int getWidth() { return 320; }
 		int getHeight() { return 240; }
