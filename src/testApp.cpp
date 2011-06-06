@@ -575,7 +575,15 @@ void testApp::audioReceived(float * input, int bufferSize, int nChannels) {
 //--------------------------------------------------------------
 void testApp::audioRequested(float * output, int bufferSize, int nChannels) {
 	if ( pd )
+	{
+		unsigned long start = ofGetSystemTimeMicros();
 	    pd->audioOut(output, bufferSize, nChannels);
+		unsigned long end = ofGetSystemTimeMicros();
+		unsigned long elapsed = end-start;
+		static float average = 0.0f;
+		average = average*0.95f + elapsed*0.05f;
+		printf(" pd took %8.4f mu-s\n", average);
+	}
 }
 
 

@@ -25,10 +25,12 @@
 #define _TEST_APP
 
 #include "ofMain.h"
-#include "ofxCvMain.h"
+#include "ofxOpenCv.h"
 #include "ofxPd.h"
 
+#ifdef TARGET_LINUX
 #define NO_WINDOW
+#endif
 
 #if defined NO_WINDOW && defined TARGET_LINUX
 #define SCREEN

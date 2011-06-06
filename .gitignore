@@ -2,5 +2,10 @@ bin/wind
 bin/libs
 obj
 build
+project.xcworkspace
+xcuserdata
+*.mode?v3
+*.xcuser
+
 
 

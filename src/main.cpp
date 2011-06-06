@@ -24,7 +24,12 @@
 #include "ofMain.h"
 #include "testApp.h"
 #include "unistd.h"
+
+#ifdef NO_WINDOW
 #include "ofAppNoWindow.h"
+#else
+#include "ofAppGlutWindow.h"
+#endif
 
 //========================================================================
 int main( ){
