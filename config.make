@@ -10,7 +10,7 @@ OF_ROOT = ../../..
 # for example search paths like:
 # USER_CFLAGS = -I src/objects
 
-USER_CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -shared
+USER_CFLAGS = -DPD -DHAVE_UNISTD_H -DUSEAPI_DUMMY -shared -g
 
 
 # USER_LDFLAGS allows to pass custom flags to the linker

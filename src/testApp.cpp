@@ -70,7 +70,7 @@ void testApp::setup(){
 	mouse_x_pct = -1;
 	mouse_y_pct = -1;
 
-	ofSetFrameRate( 10.0f );
+	ofSetFrameRate( 25.0f );
 	
 	ofxXmlSettings data;
 	data.loadFile( "settings.xml" );
@@ -165,11 +165,13 @@ void testApp::setup(){
 
 
 #ifdef SCREEN
-	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL, 48000000 );
+	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL, 40000000 );
 #endif
 
 	
 	got = false;
+
+	PROFILE_SECTION_PUSH("setup");
 }
 
 
@@ -195,6 +197,15 @@ static float frame_timer = FRAME_TIME;
 static int curr_frame = START_FRAME*2;
 
 void testApp::update(){
+	PROFILE_SECTION_POP();
+	
+	if ( ofGetFrameNum()%50 == 0 )
+	{
+		printf("fps: %5.2f\n", ofGetFrameRate() );
+		FProfiler::Display();
+	}
+
+	PROFILE_SECTION_PUSH("testApp::update()");
 	
 	static bool pd_dsp_on = false;
 	if ( !pd_dsp_on && ofGetElapsedTimef() > 2.0f )
@@ -216,7 +227,10 @@ void testApp::update(){
 	if ( use_video )
 		vidPlayer.idleMovie();
 	else
-		vidGrabber.grabFrame();
+	{
+		PROFILE_THIS_BLOCK("grabber update");
+		vidGrabber.update();
+	}
 
 	got = false;
 
@@ -228,10 +242,13 @@ void testApp::update(){
 	
 	if ( frame )
 	{
+		PROFILE_THIS_BLOCK("have frame");
+
 		unsigned long start_micros = ofGetSystemTimeMicros();
 		
 		got = true;
 		
+		PROFILE_SECTION_PUSH("get frame");
 		if ( use_video )
 		{
 			captureImg.setFromPixels(vidPlayer.getPixels(), width*2, height*2 );
@@ -243,30 +260,37 @@ void testApp::update(){
 			// mask out noisy pixels on the edge of the image
 			// cvRectangle(colorImg.getCvImage(), cvPoint(CAPTURE_WIDTH-(CAPTURE_WIDTH*0.16),0), cvPoint( CAPTURE_WIDTH,CAPTURE_HEIGHT), cvScalar( 0,0,0 ), CV_FILLED );
 		}
+		PROFILE_SECTION_POP();
 
 //		printf("got frame\n");
 
 		// to hsv
-		cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
-		cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
-
-		// convert to grayscale
-		if ( which_hsv_channel == 0 )
+		PROFILE_SECTION_PUSH("to HSV/grey");
+		if ( which_hsv_channel == 3 )
 		{
-			grayImage = hue;
-		}
-		else if ( which_hsv_channel == 1 )
-		{
-			grayImage = saturation;
-		}
-		else if ( which_hsv_channel == 2 )
-		{
-			grayImage = value;
-		}
-		else if ( which_hsv_channel == 3 )
-		{
+			// use all channels
 			grayImage.setFromColorImage(colorImg);
 		}
+		else
+		{
+			cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
+			cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
+
+			// convert to grayscale
+			if ( which_hsv_channel == 0 )
+			{
+				grayImage = hue;
+			}
+			else if ( which_hsv_channel == 1 )
+			{
+				grayImage = saturation;
+			}
+			else if ( which_hsv_channel == 2 )
+			{
+				grayImage = value;
+			}
+		}
+		PROFILE_SECTION_POP();
 		
 		if (bLearnBakground == true){
 			grayBg = grayImage;		// the = sign copys the pixels from grayImage into grayBg (operator overloading)
@@ -277,22 +301,33 @@ void testApp::update(){
 		
 		// contrast
 		//grayImage.contrast( contrast_1, 0 );
+		PROFILE_SECTION_PUSH("contrast");
 		cvConvertScale( grayImage.getCvImage(), grayImage.getCvImage(), contrast_1, 0 );
 		grayImage.flagImageChanged();
-
-
+		PROFILE_SECTION_PUSH("copy contrast");
 		grayImageContrasted = grayImage;
+		PROFILE_SECTION_POP();
+		PROFILE_SECTION_POP();
 
+		PROFILE_SECTION_PUSH("diff");
 		// take the abs value of the difference between background and incoming and then threshold:
 		grayDiff.absDiff(pastImg, grayImage);
 		// save old
+		PROFILE_SECTION_PUSH("copy");
 		pastImg = grayImage;
+		PROFILE_SECTION_POP();
+		PROFILE_SECTION_PUSH("resize");
 		cvResize( grayDiff.getCvImage(), grayDiffSmall.getCvImage() );
+		PROFILE_SECTION_POP();
+		PROFILE_SECTION_POP();
 //		grayDiffSmall.blurHeavily();
 		
+		PROFILE_SECTION_PUSH("tiny");
 #ifdef NEW_TINY
 		calculateTiny( grayDiffSmall );
-		grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
+	//	PROFILE_SECTION_PUSH("set tiny from pix");
+	//	grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
+	//	PROFILE_SECTION_POP();
 #else
 		grayDiffSmall.blur(5);
 		//grayDiffSmall.contrast( contrast_2,0);
@@ -301,6 +336,7 @@ void testApp::update(){
 
 		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
 #endif
+		PROFILE_SECTION_POP();
 		
 
 		
@@ -312,6 +348,7 @@ void testApp::update(){
 			return;
 		}
 		
+
 		if ( data_send_start_timer > 0.0f )
 		{
 			data_send_start_timer -= elapsed;
@@ -320,62 +357,69 @@ void testApp::update(){
 		else
 		{
 				
+			PROFILE_THIS_BLOCK("to pd");
 				
 			float activity = 0.0f;
-			message = "";
+			//message = "";
+#ifdef NEW_TINY
+			unsigned char* pixels = tiny;
+#else
+			PROFILE_SECTION_PUSH("tiny to pixels");
 			unsigned char* pixels = grayDiffTiny.getPixels();
+			PROFILE_SECTION_POP();
+#endif
 
 			// stride will affect the way the pixels are distributed to oscillators
 			static const int TOTAL_PIXELS=TINY_WIDTH*TINY_HEIGHT;
 
 
+			PROFILE_SECTION_PUSH("pixelrow");
 			for ( int i=0; i< TINY_HEIGHT; i++ )
 			{
 				// one row at a time
-				message += "/pixelrow ";
-				pd->startList( "pixels" );
-				pd->addSymbol( "/pixelrow" );
+//				message += "/pixelrow ";
+				PROFILE_SECTION_PUSH("message setup");
+				pd->startMessage( "pixels", "/pixelrow" );
+//				pd->addSymbol( "/pixelrow" );
 				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
 				// row number
 				pd->addFloat( i );
-				char buf[128];
-				sprintf(buf, "%i ", i );
-				message += buf;
+				PROFILE_SECTION_POP();
+
 				// pixels
 				// all zeroes?
 				bool all_zeroes = true;
-				for ( int j=0; j<TINY_WIDTH; j++ )
+				int index = offset+i*stride;
+				PROFILE_SECTION_PUSH("compile");
+				for ( int j=0; j<TINY_WIDTH; j++, index+=step )
 				{
-					float val = (float)pixels[(offset+i*stride+int(step*j))%TOTAL_PIXELS]/255.0f;
+					float val = (float)pixels[index%TOTAL_PIXELS]/255.0f;
 					val *= val;
 					activity += val;
-					if ( val > 0.0f || val < 0.0f )
-					{
-						all_zeroes = false;
-						pd->addFloat( val );
-						sprintf(buf, "%f ", val );
-						message += buf;
-					}
+					pd->addFloat( val );
 				}
-				message += "\n";
-				if ( !all_zeroes )
+				PROFILE_SECTION_POP();
 				{
+					PROFILE_THIS_BLOCK("pd->finish");
 //					ofLog( OF_LOG_VERBOSE, "pd->finish() should send %s", message.c_str() );
 					pd->finish();
 				}
-				// no need to abort pd messages/lists
 			}
+			PROFILE_SECTION_POP();
 			
 			// send total activity
 			activity /= TINY_HEIGHT*TINY_WIDTH;
 
+			PROFILE_SECTION_PUSH("/activity");
 			pd->startList( "pixels" );
 			pd->addSymbol( "/activity" );
 			pd->addFloat( activity );
 			pd->finish();
+			PROFILE_SECTION_POP();
 
 			
 			// send next bit of osc
+			PROFILE_SECTION_PUSH("/pixelsum");
 			pd->startList( "pixels" );
 			pd->addSymbol( "/pixelsum" );
 			// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
@@ -397,11 +441,14 @@ void testApp::update(){
 				pd->addFloat( total );
 			}
 			pd->finish();
+			PROFILE_SECTION_POP();
 		}
+		/*
 		unsigned long end_micros = ofGetSystemTimeMicros();
 		static float average = 0;
 		average = average*0.98f + (end_micros-start_micros)*0.02f;
 		printf("frame: %8.3f micros\n", average );
+		*/
 
 	}
 	else
@@ -411,17 +458,25 @@ void testApp::update(){
 	}
 #ifdef SCREEN
 
-	ofLog(OF_LOG_NOTICE, "drawing to screen");
+	PROFILE_SECTION_PUSH("screen");
 
+	ofLog(OF_LOG_NOTICE, "drawing to screen");
+/*
 	for ( int i=0; i<TINY_WIDTH*TINY_HEIGHT; i++ )
 	{
 		static uint8_t whitchy = 0;
 		tiny[i] = (whitchy++);
-	}
+	}*/
 	screen.display8( 0, 0, 
 			grayImage.getWidth(), grayImage.getHeight()/4, 
 			grayImage.getPixels() );
+
+	PROFILE_SECTION_POP();
 #endif
+
+	PROFILE_SECTION_POP();
+
+	PROFILE_SECTION_PUSH( "__others" );
 	
 }
 
@@ -585,6 +640,7 @@ void testApp::audioReceived(float * input, int bufferSize, int nChannels) {
 void testApp::audioRequested(float * output, int bufferSize, int nChannels) {
 	if ( pd )
 	{
+		PROFILE_THIS_BLOCK("render pd");
 //		unsigned long start_micros = ofGetSystemTimeMicros();
 	    pd->audioOut(output, bufferSize, nChannels);
 //		unsigned long end_micros = ofGetSystemTimeMicros();
