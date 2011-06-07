@@ -70,7 +70,7 @@ void testApp::setup(){
 	mouse_x_pct = -1;
 	mouse_y_pct = -1;
 
-	ofSetFrameRate( 25.0f );
+	ofSetFrameRate( 10.0f );
 	
 	ofxXmlSettings data;
 	data.loadFile( "settings.xml" );
@@ -88,11 +88,12 @@ void testApp::setup(){
 	ofSetLogLevel( OF_LOG_VERBOSE );
 
 	pd = new ofxPd();
-	pd->init( 0,2,44100 );
+	static const int FREQ = 44100;
+	pd->init( 0,2,FREQ );
 	
-	ofSoundStreamSetup( 2,0,this, 44100, ofxPd::getBlockSize(), 4 );
+	ofSoundStreamSetup( 2,0,this, FREQ, ofxPd::getBlockSize(), 8 );
 	
-	pd->openPatch( "sound1/_main.pd" );
+	pd->openPatch( "sound1_low/_main.pd" );
 
 
 	if ( !use_video )
@@ -164,7 +165,7 @@ void testApp::setup(){
 
 
 #ifdef SCREEN
-	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL );
+	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL, 48000000 );
 #endif
 
 	
@@ -227,6 +228,8 @@ void testApp::update(){
 	
 	if ( frame )
 	{
+		unsigned long start_micros = ofGetSystemTimeMicros();
+		
 		got = true;
 		
 		if ( use_video )
@@ -279,6 +282,7 @@ void testApp::update(){
 
 
 		grayImageContrasted = grayImage;
+
 		// take the abs value of the difference between background and incoming and then threshold:
 		grayDiff.absDiff(pastImg, grayImage);
 		// save old
@@ -394,11 +398,16 @@ void testApp::update(){
 			}
 			pd->finish();
 		}
+		unsigned long end_micros = ofGetSystemTimeMicros();
+		static float average = 0;
+		average = average*0.98f + (end_micros-start_micros)*0.02f;
+		printf("frame: %8.3f micros\n", average );
+
 	}
 	else
 	{
-//		printf("no frame, sleeping\n");
-//		sleep(20);
+		printf("no frame, sleeping\n");
+		usleep(20*1000);
 	}
 #ifdef SCREEN
 
@@ -409,9 +418,9 @@ void testApp::update(){
 		static uint8_t whitchy = 0;
 		tiny[i] = (whitchy++);
 	}
-	screen.display8( 10, 10, 
-			grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
-			grayDiffSmall.getPixels() );
+	screen.display8( 0, 0, 
+			grayImage.getWidth(), grayImage.getHeight()/4, 
+			grayImage.getPixels() );
 #endif
 	
 }
@@ -575,7 +584,14 @@ void testApp::audioReceived(float * input, int bufferSize, int nChannels) {
 //--------------------------------------------------------------
 void testApp::audioRequested(float * output, int bufferSize, int nChannels) {
 	if ( pd )
+	{
+//		unsigned long start_micros = ofGetSystemTimeMicros();
 	    pd->audioOut(output, bufferSize, nChannels);
+//		unsigned long end_micros = ofGetSystemTimeMicros();
+//		static float average = 0;
+//		average = average*0.98f + (end_micros-start_micros)*0.02f;
+//		printf("                      audio: %8.3f micros\n", average );
+	}
 }
 
 

@@ -31,7 +31,7 @@
 #define NO_WINDOW
 
 #if defined NO_WINDOW && defined TARGET_LINUX
-#define SCREEN
+//#define SCREEN
 #include "WatterottScreen.h"
 #endif
 
