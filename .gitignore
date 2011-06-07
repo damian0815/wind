@@ -1,6 +1,9 @@
 bin/wind
 bin/libs
+bin
 obj
 build
+xcuserdata
+project.xcworkspace
 
 

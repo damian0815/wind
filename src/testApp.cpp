@@ -92,7 +92,7 @@ void testApp::setup(){
 	
 	ofSoundStreamSetup( 2,0,this, 44100, ofxPd::getBlockSize(), 4 );
 	
-	pd->openPatch( "sound1/_main.pd" );
+	pd->openPatch( "sound3_dummy/_main.pd" );
 
 
 	if ( !use_video )
@@ -175,6 +175,9 @@ void testApp::setup(){
 void testApp::exit()
 {
 	printf("in testApp::exit()\n");
+	
+	pd->sendSymbol( "pixels", "/abort" );
+	
 	free( tiny );
 	ofxPd* temp_pd = pd;
 	pd = NULL;

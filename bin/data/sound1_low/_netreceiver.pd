@@ -1,0 +1,6 @@
+#N canvas 335 298 450 300 10;
+#X obj 56 58 netreceive 9876;
+#X floatatom 155 87 5 0 0 0 - - -;
+#X obj 75 147 s pixels;
+#X connect 0 0 2 0;
+#X connect 0 1 1 0;

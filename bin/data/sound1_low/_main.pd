@@ -1,2 +1,2 @@
-#N canvas 534 453 450 300 10;
+#N canvas 260 529 450 300 10;
 #X obj 83 95 sound;
