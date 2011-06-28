@@ -245,13 +245,18 @@ else
 	endif
 endif
 
-ifeq ($(MAKECMDGOALS),clean)
-	TARGET = bin/$(APPNAME)_debug bin/$(APPNAME)
+ifeq ($(MAKECMDGOALS),cleanDebug)
+	TARGET = bin/$(APPNAME)_debug
+	TARGET_NAME = Debug
+endif
+
+ifeq ($(MAKECMDGOALS),cleanRelease)
+	TARGET = bin/$(APPNAME)
+	TARGET_NAME = Release
 endif
 
 
 OBJ_OUTPUT = obj/$(ARCH)$(TARGET_NAME)/
-CLEANTARGET = clean$(TARGET_NAME)
 
 OBJS = $(addprefix $(OBJ_OUTPUT), $(OBJFILES))
 DEPFILES = $(patsubst %.o,%.d,$(OBJS))
@@ -345,9 +350,18 @@ $(TARGET): $(OBJS) $(ADDONS_OBJS) $(USER_OBJS) $(TARGET_LIBS) $(LIB_STATIC)
 
 -include $(DEPFILES)
 
-.PHONY: clean cleanDebug cleanRelease CleanAndroid
+.PHONY: CleanAndroid
 
-$(CLEANTARGET):
+clean:
+	$(MAKE) cleanRelease
+	$(MAKE) cleanDebug
+
+cleanRelease:
+	rm -Rf -v $(OBJ_OUTPUT)
+	rm -f -v $(TARGET)
+	rm -Rf -v bin/libs
+
+cleanDebug:
 	rm -Rf -v $(OBJ_OUTPUT)
 	rm -f -v $(TARGET)
 	rm -Rf -v bin/libs
