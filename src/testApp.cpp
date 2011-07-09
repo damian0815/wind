@@ -44,8 +44,8 @@
 const static string HOST = "localhost";
 const static int PORT = 3020;
 
-const static int CAPTURE_WIDTH = 320;
-const static int CAPTURE_HEIGHT = 240;
+const static int CAPTURE_WIDTH = 640;
+const static int CAPTURE_HEIGHT = 480;
 const static int CAPTURE_DEVICE = 6;
 
 static const float DEFAULT_CONTRAST_1 = 2.0f;
@@ -91,9 +91,9 @@ void testApp::setup(){
 	static const int FREQ = 44100;
 	pd->init( 0,2,FREQ );
 	
-	ofSoundStreamSetup( 2,0,this, FREQ, ofxPd::getBlockSize(), 8 );
+	ofSoundStreamSetup( 2,0,this, FREQ, ofxPd::getBlockSize(), 4 );
 	
-	pd->openPatch( "sound1_low/_main.pd" );
+	pd->openPatch( "sound1/_main.pd" );
 
 
 	if ( !use_video )
@@ -101,15 +101,23 @@ void testApp::setup(){
 		vidGrabber.setVerbose(true);
 		ofLog(OF_LOG_VERBOSE, "opening capture device %i", capture_device );
 		vidGrabber.setDeviceID( capture_device );
-		vidGrabber.listDevices();
-		vidGrabber.initGrabber(CAPTURE_WIDTH, CAPTURE_HEIGHT);		// windows direct show users be careful
-											// some devices (dvcams, for example) don't 
-											// allow you to capture at this resolution. 
-											// you will need to check, and if necessary, change 
-											// some of these values from 320x240 to whatever your camera supports
-											// most webcams, firewire cams and analog capture devices will support this resolution.
-		width = CAPTURE_WIDTH;
-		height = CAPTURE_HEIGHT;
+		//vidGrabber.listDevices();
+		bool grabber_inited = false;
+		while ( !grabber_inited )
+		{
+			grabber_inited = vidGrabber.initGrabber(CAPTURE_WIDTH, CAPTURE_HEIGHT);		
+			if ( !grabber_inited )
+			{
+				ofLog( OF_LOG_ERROR, "couldn't open capture device, retrying" );
+				sleep(2);
+			}
+		}
+
+		width = vidGrabber.getWidth();
+		height = vidGrabber.getHeight();
+		ofLog ( OF_LOG_NOTICE, "capturing at %ix%i", width, height );
+		if ( width != CAPTURE_WIDTH || height != CAPTURE_HEIGHT )
+			ofLog( OF_LOG_WARNING, "WARNING: not requested capture size %ix%i", CAPTURE_WIDTH, CAPTURE_HEIGHT );
 	}
 	else
 	{
@@ -165,7 +173,7 @@ void testApp::setup(){
 
 
 #ifdef SCREEN
-	screen.setup( "/dev/spidev3.1", SPI_CPHA | SPI_CPOL, 40000000 );
+	screen.setup( "/dev/spidev1.1", /*SPI_CPHA | SPI_CPOL*/0, 40000000 );
 #endif
 
 	
@@ -201,12 +209,12 @@ static int curr_frame = START_FRAME*2;
 
 void testApp::update(){
 	PROFILE_SECTION_POP();
-	
+/*	
 	if ( ofGetFrameNum()%50 == 0 )
 	{
 		printf("fps: %5.2f\n", ofGetFrameRate() );
 		FProfiler::Display();
-	}
+	}*/
 
 	PROFILE_SECTION_PUSH("testApp::update()");
 	
@@ -456,14 +464,14 @@ void testApp::update(){
 	}
 	else
 	{
-		printf("no frame, sleeping\n");
+		//printf("no frame, sleeping\n");
 		usleep(20*1000);
 	}
 #ifdef SCREEN
 
 	PROFILE_SECTION_PUSH("screen");
 
-	ofLog(OF_LOG_NOTICE, "drawing to screen");
+//	ofLog(OF_LOG_NOTICE, "drawing to screen");
 /*
 	for ( int i=0; i<TINY_WIDTH*TINY_HEIGHT; i++ )
 	{
@@ -471,8 +479,8 @@ void testApp::update(){
 		tiny[i] = (whitchy++);
 	}*/
 	screen.display8( 0, 0, 
-			grayImage.getWidth(), grayImage.getHeight()/4, 
-			grayImage.getPixels() );
+			grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
+			grayDiffSmall.getPixels() );
 
 	PROFILE_SECTION_POP();
 #endif
