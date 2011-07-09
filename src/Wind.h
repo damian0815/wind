@@ -104,6 +104,7 @@ private:
 	typedef enum { SI_NONE, SI_FOCUS, SI_DIFF, SI_GRAY_CONTRASTED } ShowingImage;
 	ShowingImage showing_image;
 	ShowingImage prev_showing_image;
+	bool showing_output;
 	int xoffs, yoffs;
 	Gui gui;
 	

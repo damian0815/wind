@@ -173,6 +173,8 @@ void WatterottScreen::reset()
   RST_DISABLE();
   usleep(50*1000);
   */
+	
+	system( "sudo watterott_reset" );
 
   //driving ability
   writeCommand(0xEA, 0x0000);

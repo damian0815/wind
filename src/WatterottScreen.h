@@ -45,8 +45,8 @@ public:
 	void fillRect( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour );
 	void drawString( string text, uint16_t x, uint16_t y, ofColor colour, ofColor bg_colour=ofColor::black );
 
-private:
 	void reset();
+private:
 	uint16_t drawChar( char c, uint16_t x, uint16_t y, ofColor colour, ofColor bg_colour=ofColor::black );
 	
 	// tx (and rx if specified) should be count bytes long

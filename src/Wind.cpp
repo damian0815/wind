@@ -75,6 +75,7 @@ void Wind::setup( ofxXmlSettings& data )
 	gui.addButton( "view", "Calc", "view_calc" );
 	gui.addButton( "view_calc", "GrayCn", "view_gray_contrasted" );
 	gui.addButton( "view_calc", "Diff", "view_diff" );
+	gui.addButton( "view", "Output", "view_output" );
 	
 	gui.addButton( "Calc", "calc" );
 	gui.addButton( "calc", "Cont 1", "calc_cont1" );
@@ -101,20 +102,20 @@ void Wind::setup( ofxXmlSettings& data )
 	gui.addButton( "calc_hsv", "All(3)", "calc_hsv_setall" );
 	
 	
+	gui.addButton( "Sound", "sound" );
+	gui.addButton( "sound", "Scale", "scale_1" );
 	
 	gui.addButton( "Sys", "sys" );
 	gui.addButton( "sys", "Save", "sys_save" );
-	gui.addButton( "sys", "S/down", "sys_shutdown" );
-	gui.addButton( "sys_shutdown", "S/down", "sys_shutdown_y" );
+	gui.addButton( "sys", "Power", "sys_shutdown" );
+	gui.addButton( "sys_shutdown", "Pwroff", "sys_shutdown_y" );
+	gui.addButton( "sys_shutdown", "Reboot", "sys_reboot_y" );
 	gui.addButton( "sys_shutdown", "Cancel", "sys_shutdown_n" );
-	gui.addButton( "sys", "Reboot", "sys_reboot" );
-	gui.addButton( "sys_reboot", "Reboot", "sys_reboot_y" );
-	gui.addButton( "sys_reboot", "Cancel", "sys_reboot_n" );
 	gui.addButton( "sys", "CyWifi", "sys_cyclewifi" );
 	
 	
 	gui.addValue( "Contr1", "cont1", "%.2f" );
-	gui.addValue( "Contr2", "cont1", "%.2f" );
+	gui.addValue( "Contr2", "cont2", "%.2f" );
 	gui.addValue( "Offset", "offset", "%.0f" );
 	gui.addValue( "Stride", "stride", "%.0f" );
 	gui.addValue( "Step", "step", "%.2f" );
@@ -122,6 +123,7 @@ void Wind::setup( ofxXmlSettings& data )
 	
 	showing_image = SI_NONE;
 	prev_showing_image = SI_FOCUS;
+	showing_output = true;
 	xoffs = -1;
 	yoffs = -1;
 	
@@ -141,6 +143,7 @@ void Wind::setup( ofxXmlSettings& data )
 
 void Wind::update( unsigned char* pixels, int width, int height )
 {
+	//printf("update: %4i %2.2f\n", 1000*ofGetLastFrameTime(), ofGetFrameRate() );
 #ifdef SCREEN
 	if ( input.isCalibrating() )
 	{
@@ -236,7 +239,7 @@ void Wind::update( unsigned char* pixels, int width, int height )
 
 		PROFILE_SECTION_PUSH("tiny");
 #ifdef NEW_TINY
-		calculateTiny( grayDiffSmall );
+		calculateTiny( grayDiff );
 		//	PROFILE_SECTION_PUSH("set tiny from pix");
 		//	grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
 		//	PROFILE_SECTION_POP();
@@ -367,7 +370,26 @@ void Wind::update( unsigned char* pixels, int width, int height )
 
 		input.update();
 		if ( input.wasPressed() )
-			gui.pointerDown( input.getX(), input.getY() );
+		{
+			static int press_count = 0;
+			static unsigned long last_press = 0;
+			bool retval = gui.pointerDown( input.getX(), input.getY() );
+			unsigned long now = ofGetElapsedTimeMillis();
+			unsigned long delay = now-last_press;
+			if ( !retval && delay < 1000 )
+			{
+				press_count++;
+				if ( press_count > 3 )
+				{
+					WatterottScreen::get()->reset();
+					gui.dirtyAll();
+				}
+			}
+			else
+				press_count = 1;
+			printf("press_count %i, delay %lu\n", press_count, delay );
+			last_press = now;
+		}
 		/*if ( input.isdown() )
 			watterottscreen::get()->fillrect( input.getx()-1, input.gety()-1, 3, 3, ofcolor::green );
 */
@@ -424,6 +446,9 @@ bool Wind::buttonPressCallback( GuiButton* b )
 	
 	else if ( tag == "view_gray_contrasted" )
 		showing_image = SI_GRAY_CONTRASTED;
+
+	else if ( tag == "view_output" )
+		showing_output = !showing_output;
 	
 	else if ( tag == "calc_cont1_+" )
 		setContrast1( contrast_1 * 1.05f );
@@ -532,9 +557,9 @@ void Wind::drawGui()
 		else if ( showing_image == SI_DIFF )
 		{
 #ifndef NO_WINDOW
-			grayDiff.draw( 0, 0, 160, 120 );
+			grayDiffSmall.draw( 0, 0, 160, 120 );
 #else
-			WatterottScreen::get()->display8( 0, 0, 160, 120, grayDiff.getPixels(), xoffs, yoffs, grayDiff.getWidth() );
+			WatterottScreen::get()->display8( 0, 0, 160, 120, grayDiffSmall.getPixels(), 0, 0, grayDiffSmall.getWidth() );
 #endif
 		}
 		else if ( showing_image == SI_GRAY_CONTRASTED )
@@ -542,7 +567,14 @@ void Wind::drawGui()
 #ifndef NO_WINDOW
 			grayImageContrasted.draw( 0, 0, 160, 120 );
 #else
-			WatterottScreen::get()->display8( 0, 0, 160, 120, grayImageContrasted.getPixels(), xoffs, yoffs, grayImageContrasted.getWidth() );
+			static ofxCvGrayscaleImage gray_small;
+			if ( gray_small.getWidth()==0 )
+			{
+				gray_small.allocate( 160, 120 );
+			}
+			gray_small.scaleIntoMe( grayImageContrasted );
+			WatterottScreen::get()->display8( 0, 0, 160, 120, gray_small.getPixels(), 0, 0, gray_small.getWidth() );
+
 #endif
 		}
 		else if ( showing_image == SI_NONE && prev_showing_image != showing_image )
@@ -558,20 +590,23 @@ void Wind::drawGui()
 		prev_showing_image = showing_image;
 		
 		
-		ofFill();
-		for ( int i=0; i<TINY_HEIGHT; i++ )
+		if ( showing_output )
 		{
-			for ( int j=0; j<TINY_WIDTH; j++ )
+			ofFill();
+			for ( int i=0; i<TINY_HEIGHT; i++ )
 			{
-				ofColor c;
-				c.set( tiny[i*TINY_WIDTH+j], 255 );
+				for ( int j=0; j<TINY_WIDTH; j++ )
+				{
+					ofColor c;
+					c.set( tiny[i*TINY_WIDTH+j], 255 );
 #ifndef NO_WINDOW
-				ofSetColor( c );
-				ofRect( 180+j*4, i*4, 4, 4 );
+					ofSetColor( c );
+					ofRect( 180+j*4, i*4, 4, 4 );
 #else
-				WatterottScreen::get()->fillRect( 180+j*4, i*4, 4, 4, c );
+					WatterottScreen::get()->fillRect( 180+j*4, i*4, 4, 4, c );
 #endif
 
+				}
 			}
 		}
 	}

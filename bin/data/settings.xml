@@ -6,15 +6,15 @@
         <capture_width>640</capture_width>
         <capture_height>480</capture_height>
     </input>
-    <contrast_1>1.060644</contrast_1>
+    <contrast_1>0.916224</contrast_1>
     <contrast_2>9.260994</contrast_2>
     <stride>7</stride>
     <offset>0</offset>
-    <step>1.500000</step>
+    <step>1.250000</step>
     <which_hsv_channel>3</which_hsv_channel>
     <osc>
         <host></host>
-        <port>0</port>
+        <port>1074672621</port>
     </osc>
     <input_calibration>
         <a>-160580</a>

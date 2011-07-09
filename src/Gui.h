@@ -30,7 +30,7 @@ public:
 	string getTag() { return tag; }
 	
 	bool isDirty() { return dirty; }
-	void flagDirty() { dirty = true; }
+	void setDirty() { dirty = true; }
 	void draw( bool drawVisible );
 	
 	bool isVisible() { return visible; }
@@ -70,6 +70,7 @@ public:
 		dirty(true), title( _title ), tag (_tag), format(_format), x(_x), y(_y), value(0.0f) {};
 	
 	bool isDirty() { return dirty; }
+	void setDirty() { dirty = true; }
 	void draw();
 	string getTag() { return tag; }
 	void setValue( float v ) { value = v; dirty=true; }
@@ -116,9 +117,10 @@ public:
 	/// set actual float for the given float value
 	void setValue( string tag, float value );
 	
-	/// pointer down at (x,y)
-	void pointerDown( int x, int y );
+	/// pointer down at (x,y); return true if we hit a button, otherwise false
+	bool pointerDown( int x, int y );
 	
+	void dirtyAll();
 	void draw();
 	
 private:

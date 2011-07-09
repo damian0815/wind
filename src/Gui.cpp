@@ -85,12 +85,14 @@ GuiButton* Gui::getButton( string tag )
 	return NULL;
 }
 
-void Gui::pointerDown( int x, int y )
+bool Gui::pointerDown( int x, int y )
 {
+	bool hit = false;
 	for ( int i=0; i<buttons.size(); i++ )
 	{
 		if ( buttons[i]->isVisible() && buttons[i]->checkHit( x, y ) )
 		{
+			hit = true;
 			// flash
 			buttons[i]->markHit(true);
 			// handle non-leaf (hierarchy)
@@ -100,7 +102,7 @@ void Gui::pointerDown( int x, int y )
 				buttons[i]->setOpen( false );
 				for ( int j=0; j<siblings.size(); j++ )
 				{
-					siblings[j]->flagDirty();
+					siblings[j]->setDirty();
 				}
 			}
 			else
@@ -129,6 +131,7 @@ void Gui::pointerDown( int x, int y )
 			break;
 		}
 	}
+	return hit;
 }
 
 
@@ -155,6 +158,13 @@ void Gui::setValue( string tag, float value )
 	}
 }
 
+void Gui::dirtyAll()
+{
+	for ( int i=0; i<values.size(); i++ )
+		values[i]->setDirty();
+	for ( int i=0; i<buttons.size(); i++ )
+		buttons[i]->setDirty();
+}
 
 void Gui::draw()
 {
