@@ -184,6 +184,21 @@ void testApp::setup(){
 	gui.setup( 320, 240 );
 	gui.setListener( this );
 	gui.addButton( "View", "view" );
+	gui.addButton( "view", "Focus", "view_focus" );
+	gui.addButton( "view_focus", "Centre", "view_focus_mid" );
+	gui.addButton( "view_focus", "<-", "view_focus_left" );
+	gui.addButton( "view_focus", "->", "view_focus_right" );
+	gui.addButton( "view_focus", "/\\", "view_focus_up" );
+	gui.addButton( "view_focus", "\\/", "view_focus_down" );
+	gui.addButton( "view", "Diff", "view_diff" );
+	
+	gui.addButton( "Calc", "calc" );
+	gui.addButton( "calc", "Cont 1", "calc_cont1" );
+	gui.addButton( "calc", "Cont 2", "calc_cont2" );
+	gui.addButton( "calc_cont1", "+", "calc_cont1_+" );
+	gui.addButton( "calc_cont1", "-", "calc_cont1_-" );
+	gui.addButton( "calc_cont2", "+", "calc_cont2_+" );
+	gui.addButton( "calc_cont2", "-", "calc_cont2_-" );
 	
 	PROFILE_SECTION_PUSH("setup");
 }
