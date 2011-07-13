@@ -27,6 +27,7 @@
 #include "ofMain.h"
 #include "ofxOpenCv.h"
 #include "ofxPd.h"
+#include "Gui.h"
 
 #include "FProfiler/FProfiler.h"
 
@@ -50,7 +51,7 @@
 
 //#define KATHY
 
-class testApp : public ofBaseApp {
+class testApp : public ofBaseApp, GuiListener {
 
 	public:
 
@@ -71,7 +72,9 @@ class testApp : public ofBaseApp {
 		void audioRequested( float* output, int bufferSize, int nChannels );
 		void audioReceived( float* input, int bufferSize, int nChannels );
 	
-	void calculateTiny( ofxCvGrayscaleImage& image );
+		void buttonPressCallback( GuiButton* b );
+	
+		void calculateTiny( ofxCvGrayscaleImage& image );
 
 		ofVideoGrabber 		vidGrabber;
 		ofVideoPlayer		vidPlayer;
@@ -142,6 +145,8 @@ class testApp : public ofBaseApp {
 #endif
 
 	FProfiler profiler;
+	
+	Gui gui;
 
 };
 

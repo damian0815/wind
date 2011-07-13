@@ -179,6 +179,12 @@ void testApp::setup(){
 	
 	got = false;
 
+	// gui
+	ofSetBackgroundAuto( false );
+	gui.setup( 320, 240 );
+	gui.setListener( this );
+	gui.addButton( "View", "view" );
+	
 	PROFILE_SECTION_PUSH("setup");
 }
 
@@ -522,9 +528,11 @@ void testApp::saveSettings()
 
 //--------------------------------------------------------------
 void testApp::draw(){
+	
+	if ( ofGetFrameNum() > 3 )
+		gui.draw();
 
-	printf("draw\n");
-	if ( draw_debug )
+/*	if ( draw_debug )
 	{
 		// draw the incoming, the grayscale, the bg and the thresholded difference
 		ofSetHexColor(0xffffff);
@@ -549,7 +557,7 @@ void testApp::draw(){
 	{
 		ofSetColor( 0xff, 0xff, 0xff, 0xff );
 		colorImg.draw( 0, 0, ofGetWidth(), ofGetHeight() );
-	}
+	}*/
 	
 }
 
@@ -635,6 +643,7 @@ void testApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
+	gui.pointerDown( x, y );
 }
 
 //--------------------------------------------------------------
@@ -731,3 +740,11 @@ void testApp::calculateTiny( ofxCvGrayscaleImage& img )
 		}
 	}
 }
+
+
+void testApp::buttonPressCallback( GuiButton* b )
+{
+	ofLog( OF_LOG_VERBOSE, "button pressed: %s (%s)", b->getTitle().c_str(), b->getTag().c_str() );
+	
+}
+

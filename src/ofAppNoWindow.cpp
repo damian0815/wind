@@ -98,7 +98,7 @@ void ofAppNoWindow::runAppViaInfiniteLoop(ofPtr<ofBaseApp> appPtr){
 	#endif
 
     printf(	"***\n***\n*** ofAppNoWindow running a headerless openFrameworks app\n"
-			"***\n*** keyboard input works here\n"
+			/*"***\n*** keyboard input works here\n"*/
 			"***\n*** press Esc or Ctrl-C to quit\n"
 			"***\n");
 	while (true)
