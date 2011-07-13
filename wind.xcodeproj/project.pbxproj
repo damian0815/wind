@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2D87F5CD13CDDC1D00C414EC /* Gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F5CC13CDDC1D00C414EC /* Gui.cpp */; };
 		2D87F61613CDE1DA00C414EC /* ofAppNoWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F61413CDE1DA00C414EC /* ofAppNoWindow.cpp */; };
+		2D87F7B113CE012A00C414EC /* WatterottScreen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */; };
 		2DA682EC139E935A00278E68 /* opencv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DA68044139E935600278E68 /* opencv.a */; };
 		2DA68303139E935A00278E68 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DA68060139E935700278E68 /* ofxCvColorImage.cpp */; };
 		2DA68304139E935A00278E68 /* ofxCvContourFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DA68063139E935700278E68 /* ofxCvContourFinder.cpp */; };
@@ -153,6 +154,8 @@
 		2D87F5E113CDDE3500C414EC /* ofxThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxThread.h; sourceTree = "<group>"; };
 		2D87F61413CDE1DA00C414EC /* ofAppNoWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofAppNoWindow.cpp; sourceTree = "<group>"; };
 		2D87F61513CDE1DA00C414EC /* ofAppNoWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofAppNoWindow.h; sourceTree = "<group>"; };
+		2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WatterottScreen.cpp; sourceTree = "<group>"; };
+		2D87F7B013CE012A00C414EC /* WatterottScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WatterottScreen.h; sourceTree = "<group>"; };
 		2DA67FA3139E935600278E68 /* cv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cv.h; sourceTree = "<group>"; };
 		2DA67FA4139E935600278E68 /* cv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cv.hpp; sourceTree = "<group>"; };
 		2DA67FA5139E935600278E68 /* cvaux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cvaux.h; sourceTree = "<group>"; };
@@ -755,6 +758,8 @@
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */,
+				2D87F7B013CE012A00C414EC /* WatterottScreen.h */,
 				2D87F61413CDE1DA00C414EC /* ofAppNoWindow.cpp */,
 				2D87F61513CDE1DA00C414EC /* ofAppNoWindow.h */,
 				2DA68361139E93C100278E68 /* FProfiler */,
@@ -954,6 +959,7 @@
 				2DA68370139E93C100278E68 /* ofxMutex.cpp in Sources */,
 				2D87F5CD13CDDC1D00C414EC /* Gui.cpp in Sources */,
 				2D87F61613CDE1DA00C414EC /* ofAppNoWindow.cpp in Sources */,
+				2D87F7B113CE012A00C414EC /* WatterottScreen.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

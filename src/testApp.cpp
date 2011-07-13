@@ -184,13 +184,17 @@ void testApp::setup(){
 	gui.setup( 320, 240 );
 	gui.setListener( this );
 	gui.addButton( "View", "view" );
+	gui.addButton( "view", "None", "view_none" );
 	gui.addButton( "view", "Focus", "view_focus" );
-	gui.addButton( "view_focus", "Centre", "view_focus_mid" );
+	gui.addButton( "view_focus", "Centre", "view_focus_centre" );
 	gui.addButton( "view_focus", "<-", "view_focus_left" );
 	gui.addButton( "view_focus", "->", "view_focus_right" );
 	gui.addButton( "view_focus", "/\\", "view_focus_up" );
 	gui.addButton( "view_focus", "\\/", "view_focus_down" );
-	gui.addButton( "view", "Diff", "view_diff" );
+	gui.addButton( "view", "Calc", "view_calc" );
+	gui.addButton( "view_calc", "GrayCnt", "view_gray_contrasted" );
+	gui.addButton( "view_calc", "Diff", "view_diff" );
+	gui.addButton( "view_calc", "Diff", "view_diff" );
 	
 	gui.addButton( "Calc", "calc" );
 	gui.addButton( "calc", "Cont 1", "calc_cont1" );
@@ -200,7 +204,73 @@ void testApp::setup(){
 	gui.addButton( "calc_cont2", "+", "calc_cont2_+" );
 	gui.addButton( "calc_cont2", "-", "calc_cont2_-" );
 	
+	gui.addValue( "Contr1", "cont1", "%.2f" );
+	gui.addValue( "Contr2", "cont1", "%.2f" );
+	gui.addValue( "Offset", "offset", "%.0f" );
+	gui.addValue( "Stride", "stride", "%.0f" );
+	gui.addValue( "Step", "step", "%.2f" );
+	
+	gui.setValue( "cont1", contrast_1 );
+	gui.setValue( "cont2", contrast_2 );
+	gui.setValue( "stride", offset );
+	gui.setValue( "offset", stride );
+	gui.setValue( "step", step );
+	
+	showing_image = SI_NONE;
+	prev_showing_image = SI_FOCUS;
+	xoffs = -1;
+	yoffs = -1;
+
+	
 	PROFILE_SECTION_PUSH("setup");
+}
+
+
+
+void testApp::buttonPressCallback( GuiButton* b )
+{
+	ofLog( OF_LOG_VERBOSE, "button pressed: %s (%s)", b->getTitle().c_str(), b->getTag().c_str() );
+	
+	
+	string tag = b->getTag();
+	if ( tag == "view_focus" )
+	{
+		showing_image = SI_FOCUS;
+		if ( xoffs == -1 )
+		{
+			xoffs = colorImg.getWidth()/2-80;
+			yoffs = colorImg.getHeight()/2-60;
+		}
+	}
+	else if ( tag == "view_focus_centre" )
+	{
+		xoffs = colorImg.getWidth()/2-80;
+		yoffs = colorImg.getHeight()/2-60;
+	}
+	else if ( tag == "view_focus_left" )
+		xoffs = max(0,xoffs-10);
+	else if ( tag == "view_focus_right" )
+		xoffs = min(int(colorImg.getWidth()-160),xoffs+10);
+	else if ( tag == "view_focus_up" )
+		yoffs = max(0,yoffs-10);
+	else if ( tag == "view_focus_down" )
+		yoffs = min(int(colorImg.getHeight()-120),yoffs+10);
+
+	else if ( tag == "view_none" )
+		showing_image = SI_NONE;
+	
+	else if ( tag == "view_diff" )
+		showing_image = SI_DIFF;
+	
+	else if ( tag == "calc_cont1_+" )
+		contrast_1 *= 1.05;
+	else if ( tag == "calc_cont1_-" )
+		contrast_1 /= 1.05;
+	
+	else if ( tag == "calc_cont2_+" )
+		contrast_2 *= 1.05;
+	else if ( tag == "calc_cont2_-" )
+		contrast_2 /= 1.05;
 }
 
 
@@ -545,7 +615,41 @@ void testApp::saveSettings()
 void testApp::draw(){
 	
 	if ( ofGetFrameNum() > 3 )
+	{
 		gui.draw();
+		if ( showing_image == SI_FOCUS )
+		{
+			colorImg.setROI( xoffs, yoffs, 160, 120 );
+			colorImg.drawROI( 0, 0 );
+		}
+		else if ( showing_image == SI_DIFF )
+		{
+			grayDiff.draw( 0, 0, 160, 120 );
+		}
+		else if ( showing_image == SI_NONE && prev_showing_image != showing_image )
+		{
+			ofSetHexColor( 0x808080 );
+			ofFill();
+			ofRect( 0, 0, 160, 120 );
+		}
+		prev_showing_image = showing_image;
+		
+		
+		ofFill();
+		for ( int i=0; i<TINY_HEIGHT; i++ )
+		{
+			for ( int j=0; j<TINY_WIDTH; j++ )
+			{
+				ofColor c;
+				c.set( tiny[i*TINY_WIDTH+j], 255 );
+				ofSetColor( c );
+				ofRect( 180+j*4, i*4, 4, 4 );
+			}
+		}
+		
+		
+		
+	}
 
 /*	if ( draw_debug )
 	{
@@ -756,10 +860,4 @@ void testApp::calculateTiny( ofxCvGrayscaleImage& img )
 	}
 }
 
-
-void testApp::buttonPressCallback( GuiButton* b )
-{
-	ofLog( OF_LOG_VERBOSE, "button pressed: %s (%s)", b->getTitle().c_str(), b->getTag().c_str() );
-	
-}
 

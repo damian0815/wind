@@ -11,6 +11,7 @@
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
  */
 
+#ifdef TARGET_LINUX
 
 #include "WatterottScreen.h"
 #include "ofLog.h"
@@ -54,7 +55,46 @@ WatterottScreen::WatterottScreen( )
 {
 }
 
-void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels )
+void WatterottScreen::display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset, int stride )
+{
+	static uint8_t* pixels565 = NULL;
+	static size_t pixels565_size = 0;
+	
+	if ( w*h*2 > pixels565_size )
+	{
+		if ( pixels565==NULL )
+			pixels565 = (uint8_t*)malloc( w*h*2 );
+		else
+			pixels565 = (uint8_t*)realloc( pixels565, w*h*2 );
+		pixels565_size = w*h*2;
+	}
+	
+	// convert 888 to 565
+	uint8_t* source = pixels+offset;
+	int jump = 0;
+	if ( stride != -1 )
+		jump = stride-(w*3);
+	
+	uint8_t* dest = pixels565;
+	for ( int i=0; i<h; i++ )
+	{
+		for ( int j=0; j<w; j++ )
+		{
+			uint8_t r = (*source++);
+			uint8_t g = (*source++);
+			uint8_t b = (*source++);
+			(*dest++) =  (r&0b11111000) | (g >> 5);
+			(*dest++) = ((g&0b11111100) << 5) | (b >> 3);
+		}
+		source += jump;
+	}
+	
+	// display
+	display565( x0, y0, w, h, pixels565 );
+	
+}
+
+void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels, int offset, int stride )
 {
 	static uint8_t* pixels565 = NULL;
 	static size_t pixels565_size = 0;
@@ -69,13 +109,21 @@ void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels )
 	}
 
 	// convert 8 to 565
-	uint8_t* source = pixels;
+	uint8_t* source = pixels+offset;
+	int jump = 0;
+	if ( stride != -1 )
+		jump = stride-w;
+	
 	uint8_t* dest = pixels565;
-	for ( int i=0; i<w*h; i++ )
+	for ( int i=0; i<h; i++ )
 	{
-		uint8_t g = source[i];
-		(*dest++) =  (g&0b11111000) | (g >> 5);
-		(*dest++) = ((g&0b11111100) << 5) | (g >> 3);
+		for ( int j=0; j<w; j++ )
+		{
+			uint8_t g = (*source++);
+			(*dest++) =  (g&0b11111000) | (g >> 5);
+			(*dest++) = ((g&0b11111100) << 5) | (g >> 3);
+		}
+		source += jump;
 	}
 
 	// display
@@ -536,3 +584,5 @@ int misc()
 
 	return 0;
 }
+
+#endif

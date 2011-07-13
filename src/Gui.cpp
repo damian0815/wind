@@ -13,7 +13,10 @@
 
 static int BUTTON_GAP = 5;
 static int BUTTON_WIDTH = 50;
-static int BUTTON_HEIGHT = 20;
+static int BUTTON_HEIGHT = 15;
+
+static int VALUE_WIDTH = 100;
+static int VALUE_HEIGHT = 15;
 
 static int MAX_LEVEL_COLOR = 3;
 static int LEVEL_COLORS[4] = { 0xFFC953, 0x96C0B1, 0xC4A093, 0x98B29C };
@@ -24,6 +27,7 @@ void Gui::setup( int w, int h )
 {
 	height = h;
 	width = w;
+	text_dirty = true;
 }
 
 GuiButton* Gui::addButton( string title, string tag, int x, int y, int depth )
@@ -114,6 +118,29 @@ void Gui::pointerDown( int x, int y )
 }
 
 
+void Gui::addValue( string title, string tag, string format, int y )
+{
+	GuiTextValue* v = new GuiTextValue( title, tag, format, width-VALUE_WIDTH, y );
+	values.push_back( v );
+}
+
+void Gui::addValue( string title, string tag, string format )
+{	
+	int y=0;
+	if ( values.size() > 0 )
+		y = values.back()->getY()+VALUE_HEIGHT;
+	addValue( title, tag, format, y );
+}
+
+void Gui::setValue( string tag, float value )
+{
+	for ( int i=0; i<values.size(); i++ )
+	{
+		if ( values[i]->getTag() == tag )
+			values[i]->setValue( value );
+	}
+}
+
 
 void Gui::draw()
 {
@@ -131,6 +158,12 @@ void Gui::draw()
 	{
 		if ( buttons[i]->isDirty() )
 			buttons[i]->draw( true );
+	}
+
+	for ( int i=0; i<values.size(); i++ )
+	{
+		if ( values[i]->isDirty() )
+			values[i]->draw();
 	}
 }
 
@@ -181,7 +214,7 @@ void GuiButton::draw( bool drawVisible )
 		ofSetHexColor( 0x000000 );
 		ofNoFill();
 		ofRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT );
-		ofDrawBitmapString( title, ofPoint( x+3, y+BUTTON_HEIGHT-3 ) );
+		ofDrawBitmapString( title, ofPoint( x+1, y+BUTTON_HEIGHT-3 ) );
 		dirty = false;
 	}
 	else if ( !visible && !drawVisible )
@@ -231,3 +264,18 @@ int GuiButton::getNextYPos()
 	else
 		return y;
 }
+
+void GuiTextValue::draw()
+{
+	ofSetHexColor( 0x000000 );
+	ofFill();
+	ofRect( x, y, VALUE_WIDTH, VALUE_HEIGHT );
+	ofSetHexColor( 0xffffff );
+	ofDrawBitmapString( title, x, y+(VALUE_HEIGHT-3) );
+	char buf[512];
+	sprintf( buf, format.c_str(), value );
+	ofDrawBitmapString( buf, x+60, y+(VALUE_HEIGHT-3) );
+	
+	dirty = false;
+}
+

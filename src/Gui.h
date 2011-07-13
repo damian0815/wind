@@ -58,6 +58,28 @@ private:
 };
 
 
+class GuiTextValue
+{
+public:
+	
+	GuiTextValue( string _title, string _tag, string _format, int _x, int _y ): 
+		dirty(true), title( _title ), tag (_tag), format(_format), x(_x), y(_y), value(0.0f) {};
+	
+	bool isDirty() { return dirty; }
+	void draw();
+	string getTag() { return tag; }
+	void setValue( float v ) { value = v; }
+	
+	int getY() { return y; }
+	
+private:
+	bool dirty;
+	string title, tag, format;
+	int x,y;
+	float value;
+	
+};
+
 
 class GuiListener
 {
@@ -83,6 +105,12 @@ public:
 	/// add a button and make it the child of the given parentTag
 	GuiButton* addButton( string parentTag, string title, string tag );
 	
+	/// add a float value
+	void addValue( string title, string tag, string format );
+	void addValue( string title, string tag, string format, int y );
+	/// set actual float for the given float value
+	void setValue( string tag, float value );
+	
 	/// pointer down at (x,y)
 	void pointerDown( int x, int y );
 	
@@ -104,11 +132,14 @@ private:
 	
 	vector< GuiButton* > buttons;
 	vector< GuiButton* > root_buttons;
+	vector< GuiTextValue* > values;
 	
 	int width, height;
 	int num_root_buttons;
+	bool text_dirty;
 	
 	GuiListener* listener;
+	
 	
 };
 

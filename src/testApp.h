@@ -146,6 +146,10 @@ class testApp : public ofBaseApp, GuiListener {
 
 	FProfiler profiler;
 	
+	typedef enum { SI_NONE, SI_FOCUS, SI_DIFF } ShowingImage;
+	ShowingImage showing_image;
+	ShowingImage prev_showing_image;
+	int xoffs, yoffs;
 	Gui gui;
 
 };
