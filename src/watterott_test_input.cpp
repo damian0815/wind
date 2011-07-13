@@ -11,10 +11,6 @@
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
  */
 
-
-#include "WatterottScreen.h"
-#include "ofLog.h"
-
 #include <stdint.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -22,13 +18,20 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
 #include <algorithm>
 #include <math.h>
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+static void pabort(const char *s)
+{
+	perror(s);
+	abort();
+}
 
-uint16_t WatterottScreen::rgb565( float r, float g, float b )
+static uint16_t rgb565( float r, float g, float b )
 {
 	uint8_t c[2] = { 0, 0 };
 	c[1] = 	uint8_t(b*0b11111);
@@ -41,6 +44,8 @@ uint16_t WatterottScreen::rgb565( float r, float g, float b )
 }
 
 
+static const char *device = "/dev/spidev1.1";
+static const char *device_input = "/dev/spidev1.0";
 static uint8_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 500000;
@@ -49,41 +54,33 @@ static uint16_t delay = 0;
 const static uint8_t LCD_DATA = 0x72;
 const static uint8_t LCD_REGISTER = 0x70;
 
-WatterottScreen::WatterottScreen( )
-: fd(-1)
+class WatterottScreen
+{
+	public:
+		WatterottScreen( int _fd );
+
+		void reset();
+		void display( int x0, int y0, int w, int h, uint8_t* pixels );
+		int getWidth() { return 320; }
+		int getHeight() { return 240; }
+
+	private:
+		// tx (and rx if specified) should be count bytes long
+		int writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd=true, uint8_t* rx=NULL );
+		int readCommand( uint8_t cmd, uint8_t &result );
+		int writeCommand( uint8_t cmd, uint8_t arg );
+		int writeData( uint8_t* data, int count );
+
+		int fd;
+};
+
+
+WatterottScreen::WatterottScreen( int _fd )
+: fd(_fd)
 {
 }
 
-void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels )
-{
-	static uint8_t* pixels565 = NULL;
-	static size_t pixels565_size = 0;
-
-	if ( w*h*2 > pixels565_size )
-	{
-		if ( pixels565==NULL )
-			pixels565 = (uint8_t*)malloc( w*h*2 );
-		else
-			pixels565 = (uint8_t*)realloc( pixels565, w*h*2 );
-		pixels565_size = w*h*2;
-	}
-
-	// convert 8 to 565
-	uint8_t* source = pixels;
-	uint8_t* dest = pixels565;
-	for ( int i=0; i<w*h; i++ )
-	{
-		uint8_t g = source[i];
-		(*dest++) =  (g&0b11111000) | (g >> 5);
-		(*dest++) = ((g&0b11111100) << 5) | (g >> 3);
-	}
-
-	// display
-	display565( x0, y0, w, h, pixels565 );
-
-}
-
-void WatterottScreen::display565( int x0, int y0, int w, int h, uint8_t* pixels )
+void WatterottScreen::display( int x0, int y0, int w, int h, uint8_t* pixels )
 {
 	int x1 = x0+w-1;
 	int y1 = y0+h-1;
@@ -102,13 +99,13 @@ void WatterottScreen::display565( int x0, int y0, int w, int h, uint8_t* pixels 
 	int ret = writeSPI( tx, 2 );
 	if ( ret < 0 )
 	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: error %i starting pixel write (0x22)\n", ret );
+		fprintf(stderr, "error %i starting pixel write (0x22)\n", ret );
 	}
 
 	ret = writeData( pixels, w*h*2 );
 	if ( ret < 0 )
 	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: error %i writing %i bytes of pixel data\n", ret, getWidth()*getHeight()*2 );
+		fprintf(stderr, "error %i writing %i bytes of pixel data\n", ret, getWidth()*getHeight()*2 );
 	}
 
 
@@ -160,7 +157,7 @@ void WatterottScreen::reset()
   //color selection
   uint8_t colour;
   readCommand( 0x17, colour );
-  ofLog( OF_LOG_NOTICE, "WatterottScreen: current colour setting is %02x\n", colour );
+  printf(" current colour setting is %02x\n", colour );
   writeCommand(0x17, 0x0005); //0x0005=65k, 0x0006=262k
 
   //panel characteristic
@@ -178,14 +175,14 @@ void WatterottScreen::reset()
 }
 
 
-int WatterottScreen::writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd, uint8_t* rx, uint32_t override_speed )
+int WatterottScreen::writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd, uint8_t* rx )
 {
 	struct spi_ioc_transfer tr;
    	tr.tx_buf = (unsigned long)tx;
 	tr.rx_buf = (unsigned long)rx;
 	tr.len = count;
 	tr.delay_usecs = delay;
-	tr.speed_hz = (override_speed>0)?override_speed:speed;
+	tr.speed_hz = speed;
 	tr.bits_per_word = bits;
 	tr.cs_change = (toggleCSOnEnd?1:0);
 
@@ -194,10 +191,6 @@ int WatterottScreen::writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd, uint8
 		printf("%x ", tx[i] );
 	}
 	printf("\n");*/
-/*	printf("fd %i, count %i, tx %x, rx %x, delay %i, speed %i, bpw %i, cs %i\n", 
-			fd, tr.len, tr.tx_buf, tr.rx_buf, tr.delay_usecs, tr.speed_hz, tr.bits_per_word, tr.cs_change );
-			*/
-
 
 	return ioctl( fd, SPI_IOC_MESSAGE(1), &tr );
 
@@ -212,7 +205,7 @@ int WatterottScreen::readCommand( uint8_t cmd, uint8_t &result )
 	tx[0][1] = cmd;
 	tr[0].tx_buf = (unsigned long)tx[0];
 	tr[0].len = 2;
-	tr[0].speed_hz = 500000;
+	tr[0].speed_hz = speed;
 	tr[0].cs_change = 0;
 	tr[0].bits_per_word = bits;
 
@@ -223,7 +216,7 @@ int WatterottScreen::readCommand( uint8_t cmd, uint8_t &result )
 	tr[1].tx_buf = (unsigned long)tx[1];
 	tr[1].rx_buf = (unsigned long)rx;
 	tr[1].len = 2;
-	tr[1].speed_hz = 500000;
+	tr[1].speed_hz = speed;
 	tr[1].cs_change = 1;
 	tr[1].bits_per_word = bits;
 
@@ -239,19 +232,19 @@ int WatterottScreen::writeCommand( uint8_t cmd, uint8_t arg )
 	uint8_t tx[2];
 	tx[0] = LCD_REGISTER;
 	tx[1] = cmd;
-	int ret = writeSPI( tx, 2, true, NULL, 500000 );
+	int ret = writeSPI( tx, 2 );
 	if ( ret < 0 )
 	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: error %i writing command %x:%x (cmd)\n", ret, cmd, arg );
+		fprintf(stderr, "error %i writing command %x:%x (cmd)\n", ret, cmd, arg );
 		return ret;
 	}
 
 	tx[0] = LCD_DATA;
 	tx[1] = arg;
-	ret = writeSPI( tx, 2, true, NULL, 500000 );
+	ret = writeSPI( tx, 2 );
 	if ( ret < 0 )
 	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: error %i writing command %x:%x (arg)\n", ret, cmd, arg );
+		fprintf(stderr, "error %i writing command %x:%x (arg)\n", ret, cmd, arg );
 	}
 	return ret;
 }
@@ -285,7 +278,7 @@ int WatterottScreen::writeData( uint8_t* data, int count )
 		{
 			ret = ioctl( fd, SPI_IOC_MESSAGE( chunks ), tr );
 			if ( ret < 0 )
-				fprintf( stderr, "WatterottScreen: error %i writing data (%i left)\n", ret, count );
+				fprintf( stderr, "error %i writing data (%i left)\n", ret, count );
 			chunks = 1;
 		}
 
@@ -297,7 +290,7 @@ int WatterottScreen::writeData( uint8_t* data, int count )
 	{
 		ret = ioctl( fd, SPI_IOC_MESSAGE( chunks ), tr );
 		if ( ret < 0 )
-			fprintf( stderr, "WatterottScreen: error %i writing data (%i left)\n", ret, count );
+			fprintf( stderr, "error %i writing data (%i left)\n", ret, count );
 	}
 
 	return ret;
@@ -338,6 +331,66 @@ int WatterottScreen::writeData( uint8_t* data, int count )
 	puts("");
 }*/
 
+#define CMD_START       (0x80)
+
+#define CMD_12BIT       (0x00)
+
+#define CMD_8BIT        (0x08)
+
+#define CMD_DIFF        (0x00)
+
+#define CMD_SINGLE      (0x04)
+
+#define CMD_X_POS       (0x10)
+
+#define CMD_Z1_POS      (0x30)
+
+#define CMD_Z2_POS      (0x40)
+
+#define CMD_Y_POS       (0x50)
+
+#define CMD_PWD         (0x00)
+
+#define CMD_ALWAYSON    (0x03)
+
+
+
+
+void readPressure( int fd_in )
+{
+	struct spi_ioc_transfer tr[4] = { 0, 0, 0, 0 };
+	tr[0].speed_hz = speed<10000000?speed:10000; // restrict to 10Mhz
+	tr[0].bits_per_word = bits;
+	tr[0].cs_change = 0;
+	tr[0].len = 1;
+
+	tr[1] = tr[0];
+	tr[2] = tr[0];
+	tr[3] = tr[0];
+
+	uint8_t tx[2];
+	uint8_t rx[2];
+
+	tx[0] = ( CMD_START | CMD_8BIT | CMD_DIFF | CMD_Z1_POS );
+	tx[1] = ( CMD_START | CMD_8BIT | CMD_DIFF | CMD_Z2_POS );
+	tr[0].tx_buf = (unsigned long)&tx[0];
+	tr[0].rx_buf = 0;
+	tr[1].tx_buf = 0;
+	tr[1].rx_buf = (unsigned long)&rx[0];
+	tr[2].tx_buf = (unsigned long)&tx[1];
+	tr[2].rx_buf = 0;
+	tr[3].tx_buf = 0;
+	tr[3].rx_buf = (unsigned long)&rx[1];
+	tr[3].cs_change = 1;
+
+	int ret = ioctl( fd_in, SPI_IOC_MESSAGE(4), tr );
+
+	int pressure = rx[0] + (127-rx[1]);
+	printf("read: %i -> pressure %i     \n", ret, pressure );
+
+
+}
+
 static void print_usage(const char *prog)
 {
 	printf("Usage: %s [-DsbdlHOLC3]\n", prog);
@@ -354,7 +407,6 @@ static void print_usage(const char *prog)
 	exit(1);
 }
 
-/*
 static void parse_opts(int argc, char *argv[])
 {
 	while (1) {
@@ -422,84 +474,101 @@ static void parse_opts(int argc, char *argv[])
 			break;
 		}
 	}
-}*/
+}
 
-bool WatterottScreen::setup( const char* device, uint8_t _mode, uint32_t _speed )
+int main(int argc, char *argv[])
 {
 	int ret = 0;
-	speed = _speed;
-	mode = _mode;
+	int fd, fd_input;
 
+	parse_opts(argc, argv);
+
+	printf("opening %s\n", device );
 	fd = open(device, O_RDWR);
 	if (fd < 0)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't open device");
-		return false;
-	}
+		pabort("can't open device");
 
 	/*
 	 * spi mode
 	 */
 	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
 	if (ret == -1)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't set spi mode");
-		return false;
-	}
+		pabort("can't set spi mode");
 
 	ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
 	if (ret == -1)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't get spi mode");
-		return false;
-	}
+		pabort("can't get spi mode");
 
 	/*
 	 * bits per word
 	 */
 	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
 	if (ret == -1)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't set bits per word");
-		return false;
-	}
+		pabort("can't set bits per word");
 
 	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
 	if (ret == -1)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't get bits per word");
-		return false;
-	}
+		pabort("can't get bits per word");
 
 	/*
 	 * max speed hz
 	 */
 	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
 	if (ret == -1)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't set max speed hz");
-		return false;
-	}
+		pabort("can't set max speed hz");
 
 	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
 	if (ret == -1)
-	{
-		ofLog(OF_LOG_ERROR, "WatterottScreen: can't get max speed hz");
-		return false;
-	}
+		pabort("can't get max speed hz");
 
-	ofLog(OF_LOG_VERBOSE, "spi mode: %d", mode);
-	ofLog(OF_LOG_VERBOSE, "bits per word: %d", bits);
-	ofLog(OF_LOG_VERBOSE, "max speed: %d Hz (%d KHz)", speed, speed/1000);
+	printf("spi mode: %d\n", mode);
+	printf("bits per word: %d\n", bits);
+	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
 
-	//WatterottScreen screen(fd);
-	reset();
 
-	return true;
-}
+	printf("opening %s\n", device_input );
+	fd_input = open(device_input, O_RDWR);
+	if (fd_input < 0)
+		pabort("can't open device");
 
-int misc()
-{
+	/*
+	 * spi mode
+	 */
+	ret = ioctl(fd_input, SPI_IOC_WR_MODE, &mode);
+	if (ret == -1)
+		pabort("can't set spi mode");
+
+	ret = ioctl(fd_input, SPI_IOC_RD_MODE, &mode);
+	if (ret == -1)
+		pabort("can't get spi mode");
+
+	/*
+	 * bits per word
+	 */
+	ret = ioctl(fd_input, SPI_IOC_WR_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't set bits per word");
+
+	ret = ioctl(fd_input, SPI_IOC_RD_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't get bits per word");
+
+	/*
+	 * max speed hz
+	 */
+	ret = ioctl(fd_input, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't set max speed hz");
+
+	ret = ioctl(fd_input, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't get max speed hz");
+
+
+
+	WatterottScreen screen(fd);
+	screen.reset();
+
 	int w = 160;
 	int h = 120;	
 	uint16_t stuff[w*h];
@@ -523,15 +592,17 @@ int misc()
 				/*float r = (float)i/320;
 				float g = (float)j/240;
 				float b = 1.0f-(r+g)/2.0f;*/
-				uint16_t rgb = WatterottScreen::rgb565( r, r, r );
+				uint16_t rgb = rgb565( r, r, r );
 				stuff[index+j] = rgb;
 				stuff[index+j+1] = rgb;
 				stuff[index+w+j] = rgb;
 				stuff[index+w+j+1] = rgb;
 			}
 		}
-		//screen.display( 0, 0, w, h, (uint8_t*)stuff );
+		screen.display( 0, 0, w, h, (uint8_t*)stuff );
 		t+=0.1f;
+
+		readPressure( fd_input );
 	}
 
 	return 0;

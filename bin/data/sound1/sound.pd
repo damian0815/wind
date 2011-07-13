@@ -1,4 +1,4 @@
-#N canvas 725 309 582 605 10;
+#N canvas 732 181 615 684 10;
 #X obj 93 74 unpackOSC;
 #X obj 24 42 playback;
 #X obj 92 104 routeOSC /pixelrow;
@@ -21,7 +21,7 @@
 #X msg 306 331 200;
 #X msg 419 363 1;
 #X obj 134 350 compress;
-#X obj 85 496 d-out~;
+#X obj 124 504 d-out~;
 #X msg 470 334 0;
 #X obj 252 195 row2 54 4;
 #X obj 3 185 row2 54 5;
@@ -33,7 +33,7 @@
 #X obj 83 187 row2 54 8;
 #X obj 360 289 loadbang;
 #X msg 242 353 10;
-#X obj 136 434 effects;
+#X obj 169 429 effects;
 #X msg 385 339 2.5;
 #X msg 464 45 32;
 #X obj 9 17 r pixels;

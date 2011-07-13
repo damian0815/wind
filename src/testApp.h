@@ -28,6 +28,8 @@
 #include "ofxOpenCv.h"
 #include "ofxPd.h"
 
+#include "FProfiler/FProfiler.h"
+
 #ifdef TARGET_LINUX
 #define NO_WINDOW
 #endif
@@ -37,8 +39,8 @@
 #include "WatterottScreen.h"
 #endif
 
-//#define TINY_WIDTH 8
-//#define TINY_HEIGHT 6
+//#define TINY_WIDTH 6
+//#define TINY_HEIGHT 4
 
 #define TINY_WIDTH 8
 #define TINY_HEIGHT 6
@@ -138,6 +140,8 @@ class testApp : public ofBaseApp {
 #ifdef SCREEN
 	WatterottScreen screen;
 #endif
+
+	FProfiler profiler;
 
 };
 
