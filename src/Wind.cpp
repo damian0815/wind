@@ -54,6 +54,7 @@ void Wind::setup( ofxXmlSettings& data )
 	
 #ifdef SCREEN
 	screen.setup( "/dev/spidev1.1", /*SPI_CPHA | SPI_CPOL*/0, 40000000 );
+	input.setup( "/dev/spidev1.0", 0, 10000000 );
 #endif
 	
 	// gui
