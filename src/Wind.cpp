@@ -352,6 +352,10 @@ void Wind::update( unsigned char* pixels, int width, int height )
 					grayDiffSmall.getPixels() );
 	
 	input.update();
+
+#ifdef NO_WINDOW
+	drawGui();
+#endif
 	
 	PROFILE_SECTION_POP();
 #endif
@@ -485,13 +489,14 @@ void Wind::saveSettings( ofxXmlSettings& data )
 	
 }
 
-
-void Wind::draw()
+void Wind::drawGui()
 {
-	
+		
 	if ( ofGetFrameNum() > 3 )
 	{
 		gui.draw();
+
+#ifndef NO_WINDOW
 		if ( showing_image == SI_FOCUS )
 		{
 			colorImg.setROI( xoffs, yoffs, 160, 120 );
@@ -526,11 +531,18 @@ void Wind::draw()
 				ofRect( 180+j*4, i*4, 4, 4 );
 			}
 		}
-		
-		
-		
+#endif
 	}
 	
+}
+
+
+void Wind::draw()
+{
+#ifndef NO_WINDOW
+	drawGui();
+#endif
+
 	if ( draw_debug && colorImg.getWidth() != 0 )
 	{
 		// draw the incoming, the grayscale, the bg and the thresholded difference

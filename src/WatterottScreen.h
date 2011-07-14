@@ -14,6 +14,7 @@ class WatterottScreen
 public:
 	WatterottScreen();
 	~WatterottScreen();
+	static WatterottScreen* get() { return instance; }
 
 	/// open ioctl to device (eg /dev/spidev3.1), with given mode
 	/// (eg SPI_CPHA | SPI_CPOL); communicate at given speed (bps)
@@ -37,8 +38,8 @@ public:
 
 
 	/// drawing code
-	void drawRect( int x0, int y0, int x1, int y1, ofColor colour );
-	void fillRect( int x0, int y0, int x1, int y1, ofColor colour );
+	void drawRect( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour );
+	void fillRect( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour );
 
 private:
 	void reset();
@@ -53,7 +54,10 @@ private:
 	uint8_t mode; 
 	uint32_t speed;
 	
-	unsigned char* shared_working_buf; // 320*240*2 bytes
+	uint16_t* shared_working_buf; // 320*240*2 bytes
+
+
+	static WatterottScreen* instance;
 };
 
 
