@@ -120,7 +120,7 @@ void Gui::pointerDown( int x, int y )
 
 void Gui::addValue( string title, string tag, string format, int y )
 {
-	GuiTextValue* v = new GuiTextValue( title, tag, format, width-VALUE_WIDTH, y );
+	GuiValue* v = new GuiValue( title, tag, format, width-VALUE_WIDTH, y );
 	values.push_back( v );
 }
 
@@ -265,7 +265,7 @@ int GuiButton::getNextYPos()
 		return y;
 }
 
-void GuiTextValue::draw()
+void GuiValue::draw()
 {
 	ofSetHexColor( 0x000000 );
 	ofFill();

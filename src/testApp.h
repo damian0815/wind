@@ -25,133 +25,48 @@
 #define _TEST_APP
 
 #include "ofMain.h"
-#include "ofxOpenCv.h"
-#include "ofxPd.h"
-#include "Gui.h"
+#include "Constants.h"
+#include "Wind.h"
 
 #include "FProfiler/FProfiler.h"
 
-#ifdef TARGET_LINUX
-#define NO_WINDOW
-#endif
 
-#if defined NO_WINDOW && defined TARGET_LINUX
-#define SCREEN
-#include "WatterottScreen.h"
-#endif
+class testApp : public ofBaseApp {
 
-//#define TINY_WIDTH 6
-//#define TINY_HEIGHT 4
-
-#define TINY_WIDTH 8
-#define TINY_HEIGHT 6
+public:
 
 
-#define CAM_CAPTURE
+	void setup();
+	void update();
+	void draw();
+	void exit();
 
-//#define KATHY
+	void keyPressed  (int key);
+	void mouseMoved(int x, int y );
+	void mouseDragged(int x, int y, int button);
+	void mousePressed(int x, int y, int button);
+	void mouseReleased();
 
-class testApp : public ofBaseApp, GuiListener {
+	void audioRequested( float* output, int bufferSize, int nChannels );
+	void audioReceived( float* input, int bufferSize, int nChannels );
 
-	public:
-
-
-		void setup();
-		void update();
-		void draw();
-		void exit();
-
-		void keyPressed  (int key);
-		void mouseMoved(int x, int y );
-		void mouseDragged(int x, int y, int button);
-		void mousePressed(int x, int y, int button);
-		void mouseReleased();
+	void saveSettings();
 	
-		void saveSettings();
+private:
+	
+	ofVideoGrabber 		vidGrabber;
+	ofVideoPlayer		vidPlayer;
+	bool use_video;
+	
+	string video_filename;
+	int capture_device, capture_width, capture_height;
 
-		void audioRequested( float* output, int bufferSize, int nChannels );
-		void audioReceived( float* input, int bufferSize, int nChannels );
+	float mouse_x_pct, mouse_y_pct;
 	
-		void buttonPressCallback( GuiButton* b );
-	
-		void calculateTiny( ofxCvGrayscaleImage& image );
-
-		ofVideoGrabber 		vidGrabber;
-		ofVideoPlayer		vidPlayer;
-		ofxCvGrayscaleImage 	grayImage;
-		ofxCvGrayscaleImage		grayImageContrasted;	
-		ofxCvGrayscaleImage		pastImg;
-		ofxCvGrayscaleImage 	grayBg;
-		ofxCvGrayscaleImage 	grayDiff;
-		ofxCvGrayscaleImage 	grayDiffSmall;
-		ofxCvGrayscaleImage 	grayDiffTiny;
-	
-//	ofxCvGrayscaleImage	grayDiffTiny_new;
-	
-		ofxCvGrayscaleImage	pastDiff;
-		ofxCvGrayscaleImage 	grayDiffDiff;
-		ofxCvColorImage		colorImg;
-		ofxCvColorImage		captureImg;
-		ofxCvColorImage		hsvImg;
-		
-		float contrast_1, contrast_2;
-		bool use_video;
-		string video_filename;
-		int capture_device;
-		string host; 
-		int	port;
-		int which_hsv_channel;
-	
-	
-		ofxCvGrayscaleImage	hue;
-		ofxCvGrayscaleImage	saturation;
-		ofxCvGrayscaleImage	value;
-
-		int 				threshold;
-		bool				bLearnBakground;
-		
-		int width,height, draw_width,draw_height;
-
-
-		int rows, cols;
-        int block_size;
-        int shift_size;
-
-		int stride;
-		int offset;
-		float step;
-		
-        
-        CvMat *velx, *vely;
-        CvSize block;
-        CvSize shift;
-        CvSize max_range;
-		
-		bool draw_debug;
-		bool got;
-		string message;
-		bool first_frame;
-	
-	float data_send_start_timer;
-	
-		ofxPd* pd;
-	
-		float mouse_x_pct, mouse_y_pct;
-	
-	unsigned char* tiny;
-	
-#ifdef SCREEN
-	WatterottScreen screen;
-#endif
-
 	FProfiler profiler;
 	
-	typedef enum { SI_NONE, SI_FOCUS, SI_DIFF } ShowingImage;
-	ShowingImage showing_image;
-	ShowingImage prev_showing_image;
-	int xoffs, yoffs;
-	Gui gui;
-
+	Wind wind;
+	
 };
 
 #endif

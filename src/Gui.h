@@ -58,17 +58,17 @@ private:
 };
 
 
-class GuiTextValue
+class GuiValue
 {
 public:
 	
-	GuiTextValue( string _title, string _tag, string _format, int _x, int _y ): 
+	GuiValue( string _title, string _tag, string _format, int _x, int _y ): 
 		dirty(true), title( _title ), tag (_tag), format(_format), x(_x), y(_y), value(0.0f) {};
 	
 	bool isDirty() { return dirty; }
 	void draw();
 	string getTag() { return tag; }
-	void setValue( float v ) { value = v; }
+	void setValue( float v ) { value = v; dirty=true; }
 	
 	int getY() { return y; }
 	
@@ -84,7 +84,8 @@ private:
 class GuiListener
 {
 public: 
-	virtual void buttonPressCallback( GuiButton* button ) {};
+	/// return true if gui should close on press
+	virtual bool buttonPressCallback( GuiButton* button ) { return false ;};
 };
 
 
@@ -132,7 +133,7 @@ private:
 	
 	vector< GuiButton* > buttons;
 	vector< GuiButton* > root_buttons;
-	vector< GuiTextValue* > values;
+	vector< GuiValue* > values;
 	
 	int width, height;
 	int num_root_buttons;

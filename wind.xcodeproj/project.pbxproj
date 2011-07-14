@@ -10,6 +10,7 @@
 		2D87F5CD13CDDC1D00C414EC /* Gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F5CC13CDDC1D00C414EC /* Gui.cpp */; };
 		2D87F61613CDE1DA00C414EC /* ofAppNoWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F61413CDE1DA00C414EC /* ofAppNoWindow.cpp */; };
 		2D87F7B113CE012A00C414EC /* WatterottScreen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */; };
+		2D87F89113CEDA1B00C414EC /* Wind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F89013CEDA1B00C414EC /* Wind.cpp */; };
 		2DA682EC139E935A00278E68 /* opencv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DA68044139E935600278E68 /* opencv.a */; };
 		2DA68303139E935A00278E68 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DA68060139E935700278E68 /* ofxCvColorImage.cpp */; };
 		2DA68304139E935A00278E68 /* ofxCvContourFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DA68063139E935700278E68 /* ofxCvContourFinder.cpp */; };
@@ -156,6 +157,9 @@
 		2D87F61513CDE1DA00C414EC /* ofAppNoWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofAppNoWindow.h; sourceTree = "<group>"; };
 		2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WatterottScreen.cpp; sourceTree = "<group>"; };
 		2D87F7B013CE012A00C414EC /* WatterottScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WatterottScreen.h; sourceTree = "<group>"; };
+		2D87F88F13CEDA1B00C414EC /* Wind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Wind.h; sourceTree = "<group>"; };
+		2D87F89013CEDA1B00C414EC /* Wind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Wind.cpp; sourceTree = "<group>"; };
+		2D87F89813CEDE5D00C414EC /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
 		2DA67FA3139E935600278E68 /* cv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cv.h; sourceTree = "<group>"; };
 		2DA67FA4139E935600278E68 /* cv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cv.hpp; sourceTree = "<group>"; };
 		2DA67FA5139E935600278E68 /* cvaux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cvaux.h; sourceTree = "<group>"; };
@@ -313,7 +317,7 @@
 		E45BE9770E8CC7DD009D7055 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
 		E45BE9790E8CC7DD009D7055 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		E45BE97A0E8CC7DD009D7055 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
-		E4B69B5B0A3A1756003C02F2 /* emptyExampleDebug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = emptyExampleDebug.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E4B69B5B0A3A1756003C02F2 /* emptyExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = emptyExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4B69E1D0A3A1BDC003C02F2 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
 		E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = testApp.cpp; path = src/testApp.cpp; sourceTree = SOURCE_ROOT; };
 		E4B69E1F0A3A1BDC003C02F2 /* testApp.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = testApp.h; path = src/testApp.h; sourceTree = SOURCE_ROOT; };
@@ -751,13 +755,16 @@
 				E4EEC9E9138DF44700A80321 /* openFrameworks */,
 				BB4B014C10F69532006C3DED /* addons */,
 				E45BE5980E8CC70C009D7055 /* frameworks */,
-				E4B69B5B0A3A1756003C02F2 /* emptyExampleDebug.app */,
+				E4B69B5B0A3A1756003C02F2 /* emptyExample.app */,
 			);
 			sourceTree = "<group>";
 		};
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				2D87F89813CEDE5D00C414EC /* Constants.h */,
+				2D87F88F13CEDA1B00C414EC /* Wind.h */,
+				2D87F89013CEDA1B00C414EC /* Wind.cpp */,
 				2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */,
 				2D87F7B013CE012A00C414EC /* WatterottScreen.h */,
 				2D87F61413CDE1DA00C414EC /* ofAppNoWindow.cpp */,
@@ -802,7 +809,7 @@
 			);
 			name = emptyExample;
 			productName = myOFApp;
-			productReference = E4B69B5B0A3A1756003C02F2 /* emptyExampleDebug.app */;
+			productReference = E4B69B5B0A3A1756003C02F2 /* emptyExample.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -960,6 +967,7 @@
 				2D87F5CD13CDDC1D00C414EC /* Gui.cpp in Sources */,
 				2D87F61613CDE1DA00C414EC /* ofAppNoWindow.cpp in Sources */,
 				2D87F7B113CE012A00C414EC /* WatterottScreen.cpp in Sources */,
+				2D87F89113CEDA1B00C414EC /* Wind.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
