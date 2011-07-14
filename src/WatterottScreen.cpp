@@ -11,6 +11,8 @@
  * Cross-compile with cross-gcc -I/path/to/cross-kernel/include
  */
 
+#include "ofConstants.h"
+
 #ifdef TARGET_LINUX
 
 #include "WatterottScreen.h"
@@ -44,6 +46,7 @@ uint16_t WatterottScreen::rgb565( float r, float g, float b )
 
 static uint8_t mode;
 static uint8_t bits = 8;
+static uint32_t delay = 0;
 
 const static uint8_t LCD_DATA = 0x72;
 const static uint8_t LCD_REGISTER = 0x70;

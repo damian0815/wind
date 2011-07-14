@@ -9,6 +9,10 @@
 
 #pragma once
 
+#ifdef TARGET_LINUX
+
+#include <linux/types.h>
+
 class WatterottInput
 {
 public:
@@ -35,3 +39,5 @@ private:
 	uint8_t mode;
 	
 };
+
+#endif

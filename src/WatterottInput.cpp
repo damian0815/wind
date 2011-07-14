@@ -7,8 +7,18 @@
  *
  */
 
-#include "WatterottInput.h"
 #include "ofMain.h"
+
+#ifdef TARGET_LINUX
+
+#include "WatterottInput.h"
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 
 static const uint8_t BITS_PER_WORD = 8;
@@ -81,9 +91,9 @@ int WatterottInput::setup( const char* device, uint8_t _mode, uint32_t _speed )
 		return false;
 	}
 	
-	ofLog(OF_LOG_VERBOSE, "spi mode: %d", mode);
-	ofLog(OF_LOG_VERBOSE, "bits per word: %d", bits);
-	ofLog(OF_LOG_VERBOSE, "max speed: %d Hz (%d KHz)", speed, speed/1000);
+	ofLog(OF_LOG_VERBOSE, "WatterottInput: spi mode: %d", mode);
+	ofLog(OF_LOG_VERBOSE, "WatterottInput: bits per word: %d", bits);
+	ofLog(OF_LOG_VERBOSE, "WatterottInput: max speed: %d Hz (%d KHz)", speed, speed/1000);
 	
 	return ret;
 }
@@ -168,10 +178,12 @@ void WatterottInput::update()
 		x >>= 1; //x/2
 		y >>= 1; //y/2
 
-		printf("  got x %4i y %4i", x, y );
+		printf("  got x %4i y %4i \n", x, y );
 		
 	}
 	
 }
 
+
+#endif
 
