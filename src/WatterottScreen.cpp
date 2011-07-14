@@ -30,6 +30,7 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+WatterottScreen* WatterottScreen::instance = NULL;
 
 uint16_t WatterottScreen::rgb565( float r, float g, float b )
 {
@@ -54,17 +55,19 @@ const static uint8_t LCD_REGISTER = 0x70;
 WatterottScreen::WatterottScreen( )
 : fd(-1)
 {
-	shared_working_buf = malloc( 320*240*2 );
+	instance = this;
+	shared_working_buf = (uint16_t*)malloc( 320*240*2 );
 }
 
 WatterottScreen::~WatterottScreen()
 {
 	free( shared_working_buf );
+	instance = NULL;
 }
 
 void WatterottScreen::display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset, int stride )
 {
-	uint8_t* pixels565 = shared_working_buf;
+	uint8_t* pixels565 = (uint8_t*)shared_working_buf;
 
 	// convert 888 to 565
 	uint8_t* source = pixels+offset;
@@ -545,54 +548,41 @@ bool WatterottScreen::setup( const char* device, uint8_t _mode, uint32_t _speed 
 
 
 
-void WatterottScreen::drawRect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor color)
+void WatterottScreen::drawRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, ofColor color)
 {
-	fillRect(x0, y0, x0, y1, color);
-	fillRect(x0, y1, x1, y1, color);
-	fillRect(x1, y0, x1, y1, color);
-	fillRect(x0, y0, x1, y0, color);
+	fillRect(x0, y0, 		1, height, color);
+	fillRect(x0, y0+height, width, 1, color);
+	fillRect(x0+width, y0, 	1, height, color);
+	fillRect(x0, y0, 		width, 1, color);
 	
 	return;
 }
 
 
-void WatterottScreen::fillRect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour_of )
+void WatterottScreen::fillRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, ofColor colour_of )
 {
+	//printf(" fillRect begin %i %i %i %i\n", x0, y0, width, height );
 	uint16_t size;
 	uint16_t tmp;
 	
-	if(x0 > x1)
-	{
-		tmp = x0;
-		x0  = x1;
-		x1  = tmp;
-	}
-	if(y0 > y1)
-	{
-		tmp = y0;
-		y0  = y1;
-		y1  = tmp;
-	}
-	
-	if((x1 >= lcd_width) ||
-	   (y1 >= lcd_height))
+	if((x0+width >= 320) ||
+	   (y0+height >= 240))
 	{
 		return;
 	}
 
 	// convert colour to 565
-	uint16_t colour = rgb565( (color_of.r)/255, float(color_of.g)/255, float(color_of.b)/255 );
+	uint16_t colour = rgb565( (colour_of.r)/255, float(colour_of.g)/255, float(colour_of.b)/255 );
 	uint16_t* pixels565 = (uint16_t*)shared_working_buf;
 	
-	int width = (x1-x0);
-	int height = (y1-y0);
 	int count = width*height;
 	uint16_t* cur = pixels565;
 	for ( int i=0; i<count; i++ )
 	{
-		*cur++ = colour;
+		(*cur++) = colour;
 	}
-	display565( x0, y0, width, height, pixels565 );
+	display565( int(x0), int(y0), int(width), int(height), (uint8_t*)pixels565 );
+	//printf(" fillRect done: count %i\n", count );
 	
 	return;
 }

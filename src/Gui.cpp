@@ -10,10 +10,12 @@
 
 #include "Gui.h"
 #include "ofMain.h"
+#include "Constants.h"
+#include "WatterottScreen.h"
 
 static int BUTTON_GAP = 5;
 static int BUTTON_WIDTH = 50;
-static int BUTTON_HEIGHT = 15;
+static int BUTTON_HEIGHT = 18;
 
 static int VALUE_WIDTH = 100;
 static int VALUE_HEIGHT = 15;
@@ -144,9 +146,11 @@ void Gui::setValue( string tag, float value )
 
 void Gui::draw()
 {
+#ifndef NO_WINDOW
 	ofSetHexColor( 0xffffff );
 	ofNoFill();
 	ofRect( 0, 0, width, height );
+#endif
 	// first draw non-visible dirty buttons (black squares)
 	for ( int i=0; i<buttons.size(); i++ )
 	{
@@ -208,6 +212,10 @@ void GuiButton::draw( bool drawVisible )
 {
 	if ( visible && drawVisible )
 	{
+#ifdef NO_WINDOW
+		WatterottScreen::get()->drawRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
+		WatterottScreen::get()->fillRect( x+1, y+1, BUTTON_WIDTH-1, BUTTON_HEIGHT-1, ofColor::fromHex( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] ) );
+#else
 		ofSetHexColor( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
 		ofFill();
 		ofRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT );	
@@ -215,13 +223,18 @@ void GuiButton::draw( bool drawVisible )
 		ofNoFill();
 		ofRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT );
 		ofDrawBitmapString( title, ofPoint( x+1, y+BUTTON_HEIGHT-3 ) );
+#endif
 		dirty = false;
 	}
 	else if ( !visible && !drawVisible )
 	{
+#ifdef NO_WINDOW
+		WatterottScreen::get()->fillRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
+#else
 		ofSetColor( 0, 0, 0 );
 		ofFill();
 		ofRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT );	
+#endif
 		dirty = false;
 	}		
 }

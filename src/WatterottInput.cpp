@@ -144,14 +144,13 @@ void WatterottInput::update()
 	int ret = ioctl( fd, SPI_IOC_MESSAGE(4), tr );
 	
 	pressure = rx[0] + (127-rx[1]);
-	printf("read: %i -> pressure %i     \n", ret, pressure );
 
 	// if we have pressure, read x and y
 	if ( isDown() )
 	{
 		x=0;
 		y=0;
-		for( int i=2; i!=0; i--) //2 samples
+		for( int i=4; i!=0; i--) //4 samples
 		{
 			unsigned char rx_pos[2][2];
 			// get X data
@@ -175,8 +174,8 @@ void WatterottInput::update()
 			
 			ioctl( fd, SPI_IOC_MESSAGE(4), tr );
 		}
-		x >>= 1; //x/2
-		y >>= 1; //y/2
+		x >>= 2; //x/4
+		y >>= 2; //y/4
 
 		printf("  got x %4i y %4i \n", x, y );
 		

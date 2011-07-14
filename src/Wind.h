@@ -51,6 +51,7 @@ public:
 
 private:
 	
+	void drawGui();
 	void calculateTiny( ofxCvGrayscaleImage& image );
 	
 	ofxCvColorImage		colorImg;
