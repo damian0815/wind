@@ -15,6 +15,13 @@
 #include "ofxPd.h"
 #include "ofxXmlSettings.h"
 
+#include "Constants.h"
+
+#ifdef SCREEN
+#include "WatterottScreen.h"
+#include "WatterottInput.h"
+#endif
+
 
 class Wind : public GuiListener
 {
@@ -90,6 +97,7 @@ private:
 	
 #ifdef SCREEN
 	WatterottScreen screen;
+	WatterottInput input;
 #endif
 	
 	typedef enum { SI_NONE, SI_FOCUS, SI_DIFF, SI_GRAY_CONTRASTED } ShowingImage;

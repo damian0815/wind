@@ -350,6 +350,8 @@ void Wind::update( unsigned char* pixels, int width, int height )
 					grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
 					grayDiffSmall.getPixels() );
 	
+	input.update();
+	
 	PROFILE_SECTION_POP();
 #endif
 }
