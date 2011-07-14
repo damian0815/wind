@@ -66,6 +66,7 @@ GuiButton* Gui::addButton( string parent_tag, string title, string tag )
 	{
 		parent->addChild( b );
 	}
+	return b;
 }
 
 
