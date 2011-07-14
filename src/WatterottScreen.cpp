@@ -54,22 +54,18 @@ const static uint8_t LCD_REGISTER = 0x70;
 WatterottScreen::WatterottScreen( )
 : fd(-1)
 {
+	shared_working_buf = malloc( 320*240*2 );
+}
+
+WatterottScreen::~WatterottScreen()
+{
+	free( shared_working_buf );
 }
 
 void WatterottScreen::display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset, int stride )
 {
-	static uint8_t* pixels565 = NULL;
-	static size_t pixels565_size = 0;
-	
-	if ( w*h*2 > pixels565_size )
-	{
-		if ( pixels565==NULL )
-			pixels565 = (uint8_t*)malloc( w*h*2 );
-		else
-			pixels565 = (uint8_t*)realloc( pixels565, w*h*2 );
-		pixels565_size = w*h*2;
-	}
-	
+	uint8_t* pixels565 = shared_working_buf;
+
 	// convert 888 to 565
 	uint8_t* source = pixels+offset;
 	int jump = 0;
@@ -547,43 +543,59 @@ bool WatterottScreen::setup( const char* device, uint8_t _mode, uint32_t _speed 
 	return true;
 }
 
-int misc()
+
+
+void WatterottScreen::drawRect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor color)
 {
-	int w = 160;
-	int h = 120;	
-	uint16_t stuff[w*h];
-	uint16_t colour = 0;
-	float r = 0.0f;
-	float g = 0.5f;
-	float b = 1.0f;
-	float t = 0.0f;
-	while( true )
+	fillRect(x0, y0, x0, y1, color);
+	fillRect(x0, y1, x1, y1, color);
+	fillRect(x1, y0, x1, y1, color);
+	fillRect(x0, y0, x1, y0, color);
+	
+	return;
+}
+
+
+void WatterottScreen::fillRect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour_of )
+{
+	uint16_t size;
+	uint16_t tmp;
+	
+	if(x0 > x1)
 	{
-		float sint = sinf(t);
-		for ( int i=0; i<h; i+=2 )
-		{
-			int index = i*w;
-			for ( int j=0; j<w; j+=2 )
-			{
-				
-				float r = 0.5f+0.25f*(sinf( t+float(i*j+i)/40019 )+cosf( float(j)/(256*sint))  );
-				//float g = 0.5f+0.5f*cosf( -t+(j+i*i)/1539 );
-				//float b = 0.5f+0.5f*sinf( t+(j+t+i)/1600 );
-				/*float r = (float)i/320;
-				float g = (float)j/240;
-				float b = 1.0f-(r+g)/2.0f;*/
-				uint16_t rgb = WatterottScreen::rgb565( r, r, r );
-				stuff[index+j] = rgb;
-				stuff[index+j+1] = rgb;
-				stuff[index+w+j] = rgb;
-				stuff[index+w+j+1] = rgb;
-			}
-		}
-		//screen.display( 0, 0, w, h, (uint8_t*)stuff );
-		t+=0.1f;
+		tmp = x0;
+		x0  = x1;
+		x1  = tmp;
+	}
+	if(y0 > y1)
+	{
+		tmp = y0;
+		y0  = y1;
+		y1  = tmp;
+	}
+	
+	if((x1 >= lcd_width) ||
+	   (y1 >= lcd_height))
+	{
+		return;
 	}
 
-	return 0;
+	// convert colour to 565
+	uint16_t colour = rgb565( (color_of.r)/255, float(color_of.g)/255, float(color_of.b)/255 );
+	uint16_t* pixels565 = (uint16_t*)shared_working_buf;
+	
+	int width = (x1-x0);
+	int height = (y1-y0);
+	int count = width*height;
+	uint16_t* cur = pixels565;
+	for ( int i=0; i<count; i++ )
+	{
+		*cur++ = colour;
+	}
+	display565( x0, y0, width, height, pixels565 );
+	
+	return;
 }
+
 
 #endif
