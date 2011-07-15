@@ -29,7 +29,7 @@ void Gui::setup( int w, int h )
 {
 	height = h;
 	width = w;
-	text_dirty = true;
+	first_draw = true;
 }
 
 GuiButton* Gui::addButton( string title, string tag, int x, int y, int depth )
@@ -147,11 +147,19 @@ void Gui::setValue( string tag, float value )
 
 void Gui::draw()
 {
+#ifdef SCREEN
+	if ( first_draw )
+	{
+		WatterottScreen::get()->clear( ofColor(128) );
+		first_draw = false;
+	}
+#endif
 #ifndef NO_WINDOW
 	ofSetHexColor( 0xffffff );
 	ofNoFill();
 	ofRect( 0, 0, width, height );
 #endif
+
 	// first draw non-visible dirty buttons (black squares)
 	for ( int i=0; i<buttons.size(); i++ )
 	{
@@ -213,12 +221,13 @@ void GuiButton::draw( bool drawVisible )
 {
 	if ( visible && drawVisible )
 	{
+		ofColor bg_colour = ofColor::fromHex( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
 #ifdef NO_WINDOW
 		WatterottScreen::get()->drawRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
-		WatterottScreen::get()->fillRect( x+1, y+1, BUTTON_WIDTH-1, BUTTON_HEIGHT-1, ofColor::fromHex( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] ) );
-		WatterottScreen::get()->drawString( title, x+1, y+1, ofColor::black );
+		WatterottScreen::get()->fillRect( x+1, y+1, BUTTON_WIDTH-2, BUTTON_HEIGHT-2, bg_colour ); 
+		WatterottScreen::get()->drawString( title, x+3, y+3, ofColor::black, bg_colour );
 #else
-		ofSetHexColor( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
+		ofSetColor( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
 		ofFill();
 		ofRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT );	
 		ofSetHexColor( 0x000000 );

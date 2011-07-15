@@ -34,10 +34,9 @@ public:
 	int getWidth() { return 320; }
 	int getHeight() { return 240; }
 
-	/// return a 5-6-5 uint16_t for the colour r,g,b ([0..1])
-	uint16_t rgb565( float r, float g, float b );
+	/// return a 5-6-5 uint16_t for the given colour 
 	uint16_t rgb565( uint8_t r, uint8_t g, uint8_t b );
-	uint16_t rgb565( ofColor c ) { return rgb565( c.r, c.b, c.g ); }
+	uint16_t rgb565( ofColor c ) { return rgb565( c.r, c.g, c.b ); }
 
 
 	/// drawing

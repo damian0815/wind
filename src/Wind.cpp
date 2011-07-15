@@ -55,6 +55,10 @@ void Wind::setup( ofxXmlSettings& data )
 #ifdef SCREEN
 	screen.setup( "/dev/spidev1.1", /*SPI_CPHA | SPI_CPOL*/0, 40000000 );
 	input.setup( "/dev/spidev1.0", 0, 10000000 );
+	if ( !input.loadCalibration( data ) )
+	{
+		input.startCalibration();
+	}
 #endif
 	
 	// gui
@@ -136,229 +140,241 @@ void Wind::setup( ofxXmlSettings& data )
 
 void Wind::update( unsigned char* pixels, int width, int height )
 {
-	static bool pd_dsp_on = false;
-	if ( !pd_dsp_on && ofGetElapsedTimef() > 2.0f )
+#ifdef SCREEN
+	if ( input.isCalibrating() )
 	{
-		pd->dspOn();
-		pd_dsp_on = true;
-	}
-	
-	if ( colorImg.getWidth() == 0 )
-	{
-		colorImg.allocate(width, height);
-		grayImage.allocate(width, height);
-		pastImg.allocate( width, height );
-		grayImageContrasted.allocate(width, height);
-		grayBg.allocate(width, height);
-		grayDiff.allocate(width, height);
-		grayDiffSmall.allocate( width/4,height/4);
-		grayDiffTiny.allocate( TINY_WIDTH, TINY_HEIGHT );
-		
-		hue.allocate( width, height );
-		saturation.allocate( width, height );
-		value.allocate( width, height );
-		hsvImg.allocate( width, height );
-	}
-	
-	colorImg.setFromPixels( pixels, width, height );
-	
-	// to hsv
-	PROFILE_SECTION_PUSH("to HSV/grey");
-	if ( which_hsv_channel == 3 )
-	{
-		// use all channels
-		grayImage.setFromColorImage(colorImg);
+		input.updateCalibration();
 	}
 	else
+#endif
 	{
-		cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
-		cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
-		
-		// convert to grayscale
-		if ( which_hsv_channel == 0 )
+
+		static bool pd_dsp_on = false;
+		if ( !pd_dsp_on && ofGetElapsedTimef() > 2.0f )
 		{
-			grayImage = hue;
+			pd->dspOn();
+			pd_dsp_on = true;
 		}
-		else if ( which_hsv_channel == 1 )
+
+		if ( colorImg.getWidth() == 0 )
 		{
-			grayImage = saturation;
+			colorImg.allocate(width, height);
+			grayImage.allocate(width, height);
+			pastImg.allocate( width, height );
+			grayImageContrasted.allocate(width, height);
+			grayBg.allocate(width, height);
+			grayDiff.allocate(width, height);
+			grayDiffSmall.allocate( width/4,height/4);
+			grayDiffTiny.allocate( TINY_WIDTH, TINY_HEIGHT );
+
+			hue.allocate( width, height );
+			saturation.allocate( width, height );
+			value.allocate( width, height );
+			hsvImg.allocate( width, height );
 		}
-		else if ( which_hsv_channel == 2 )
+
+		colorImg.setFromPixels( pixels, width, height );
+
+		// to hsv
+		PROFILE_SECTION_PUSH("to HSV/grey");
+		if ( which_hsv_channel == 3 )
 		{
-			grayImage = value;
+			// use all channels
+			grayImage.setFromColorImage(colorImg);
 		}
-	}
-	PROFILE_SECTION_POP();
-	
-	if (bLearnBakground == true){
-		grayBg = grayImage;		// the = sign copys the pixels from grayImage into grayBg (operator overloading)
+		else
+		{
+			cvCvtColor( colorImg.getCvImage(), hsvImg.getCvImage(), CV_BGR2HSV );
+			cvCvtPixToPlane( hsvImg.getCvImage(), hue.getCvImage(), saturation.getCvImage(), value.getCvImage(), 0 );
+
+			// convert to grayscale
+			if ( which_hsv_channel == 0 )
+			{
+				grayImage = hue;
+			}
+			else if ( which_hsv_channel == 1 )
+			{
+				grayImage = saturation;
+			}
+			else if ( which_hsv_channel == 2 )
+			{
+				grayImage = value;
+			}
+		}
+		PROFILE_SECTION_POP();
+
+		if (bLearnBakground == true){
+			grayBg = grayImage;		// the = sign copys the pixels from grayImage into grayBg (operator overloading)
+			pastImg = grayImage;
+			bLearnBakground = false;
+		}
+
+
+		// contrast
+		//grayImage.contrast( contrast_1, 0 );
+		PROFILE_SECTION_PUSH("contrast");
+		cvConvertScale( grayImage.getCvImage(), grayImage.getCvImage(), contrast_1, 0 );
+		grayImage.flagImageChanged();
+		PROFILE_SECTION_PUSH("copy contrast");
+		grayImageContrasted = grayImage;
+		PROFILE_SECTION_POP();
+		PROFILE_SECTION_POP();
+
+		PROFILE_SECTION_PUSH("diff");
+		// take the abs value of the difference between background and incoming and then threshold:
+		grayDiff.absDiff(pastImg, grayImage);
+		// save old
+		PROFILE_SECTION_PUSH("copy");
 		pastImg = grayImage;
-		bLearnBakground = false;
-	}
-	
-	
-	// contrast
-	//grayImage.contrast( contrast_1, 0 );
-	PROFILE_SECTION_PUSH("contrast");
-	cvConvertScale( grayImage.getCvImage(), grayImage.getCvImage(), contrast_1, 0 );
-	grayImage.flagImageChanged();
-	PROFILE_SECTION_PUSH("copy contrast");
-	grayImageContrasted = grayImage;
-	PROFILE_SECTION_POP();
-	PROFILE_SECTION_POP();
-	
-	PROFILE_SECTION_PUSH("diff");
-	// take the abs value of the difference between background and incoming and then threshold:
-	grayDiff.absDiff(pastImg, grayImage);
-	// save old
-	PROFILE_SECTION_PUSH("copy");
-	pastImg = grayImage;
-	PROFILE_SECTION_POP();
-	PROFILE_SECTION_PUSH("resize");
-	cvResize( grayDiff.getCvImage(), grayDiffSmall.getCvImage() );
-	PROFILE_SECTION_POP();
-	PROFILE_SECTION_POP();
-	//		grayDiffSmall.blurHeavily();
-	
-	PROFILE_SECTION_PUSH("tiny");
-#ifdef NEW_TINY
-	calculateTiny( grayDiffSmall );
-	//	PROFILE_SECTION_PUSH("set tiny from pix");
-	//	grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
-	//	PROFILE_SECTION_POP();
-#else
-	grayDiffSmall.blur(5);
-	//grayDiffSmall.contrast( contrast_2,0);
-	cvConvertScale( grayDiffSmall.getCvImage(), grayDiffSmall.getCvImage(), contrast_2, 0 );
-	grayDiffSmall.flagImageChanged();
-	
-	cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
-#endif
-	PROFILE_SECTION_POP();
-	
-	
-	
-	
-	// send osc
-	if ( first_frame )
-	{
-		first_frame = false;
-		return;
-	}
-	
-	
-	if ( data_send_start_timer > 0.0f )
-	{
-		data_send_start_timer -= ofGetElapsedTimef();
-		printf("%f\n", data_send_start_timer );
-	}
-	else
-	{
-		
-		PROFILE_THIS_BLOCK("to pd");
-		
-		float activity = 0.0f;
-		//message = "";
-#ifdef NEW_TINY
-		unsigned char* pixels = tiny;
-#else
-		PROFILE_SECTION_PUSH("tiny to pixels");
-		unsigned char* pixels = grayDiffTiny.getPixels();
 		PROFILE_SECTION_POP();
+		PROFILE_SECTION_PUSH("resize");
+		cvResize( grayDiff.getCvImage(), grayDiffSmall.getCvImage() );
+		PROFILE_SECTION_POP();
+		PROFILE_SECTION_POP();
+		//		grayDiffSmall.blurHeavily();
+
+		PROFILE_SECTION_PUSH("tiny");
+#ifdef NEW_TINY
+		calculateTiny( grayDiffSmall );
+		//	PROFILE_SECTION_PUSH("set tiny from pix");
+		//	grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
+		//	PROFILE_SECTION_POP();
+#else
+		grayDiffSmall.blur(5);
+		//grayDiffSmall.contrast( contrast_2,0);
+		cvConvertScale( grayDiffSmall.getCvImage(), grayDiffSmall.getCvImage(), contrast_2, 0 );
+		grayDiffSmall.flagImageChanged();
+
+		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
 #endif
-		
-		// stride will affect the way the pixels are distributed to oscillators
-		static const int TOTAL_PIXELS=TINY_WIDTH*TINY_HEIGHT;
-		
-		
-		PROFILE_SECTION_PUSH("pixelrow");
-		for ( int i=0; i< TINY_HEIGHT; i++ )
+		PROFILE_SECTION_POP();
+
+
+
+
+		// send osc
+		if ( first_frame )
 		{
-			// one row at a time
-			//				message += "/pixelrow ";
-			PROFILE_SECTION_PUSH("message setup");
-			pd->startMessage( "pixels", "/pixelrow" );
-			//				pd->addSymbol( "/pixelrow" );
-			// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
-			// row number
-			pd->addFloat( i );
+			first_frame = false;
+			return;
+		}
+
+
+		if ( data_send_start_timer > 0.0f )
+		{
+			data_send_start_timer -= ofGetElapsedTimef();
+			printf("%f\n", data_send_start_timer );
+		}
+		else
+		{
+
+			PROFILE_THIS_BLOCK("to pd");
+
+			float activity = 0.0f;
+			//message = "";
+#ifdef NEW_TINY
+			unsigned char* pixels = tiny;
+#else
+			PROFILE_SECTION_PUSH("tiny to pixels");
+			unsigned char* pixels = grayDiffTiny.getPixels();
 			PROFILE_SECTION_POP();
-			
-			// pixels
-			// all zeroes?
-			bool all_zeroes = true;
-			int index = offset+i*stride;
-			PROFILE_SECTION_PUSH("compile");
-			for ( int j=0; j<TINY_WIDTH; j++, index+=step )
+#endif
+
+			// stride will affect the way the pixels are distributed to oscillators
+			static const int TOTAL_PIXELS=TINY_WIDTH*TINY_HEIGHT;
+
+
+			PROFILE_SECTION_PUSH("pixelrow");
+			for ( int i=0; i< TINY_HEIGHT; i++ )
 			{
-				float val = (float)pixels[index%TOTAL_PIXELS]/255.0f;
-				val *= val;
-				activity += val;
-				pd->addFloat( val );
+				// one row at a time
+				//				message += "/pixelrow ";
+				PROFILE_SECTION_PUSH("message setup");
+				pd->startMessage( "pixels", "/pixelrow" );
+				//				pd->addSymbol( "/pixelrow" );
+				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
+				// row number
+				pd->addFloat( i );
+				PROFILE_SECTION_POP();
+
+				// pixels
+				// all zeroes?
+				bool all_zeroes = true;
+				int index = offset+i*stride;
+				PROFILE_SECTION_PUSH("compile");
+				for ( int j=0; j<TINY_WIDTH; j++, index+=step )
+				{
+					float val = (float)pixels[index%TOTAL_PIXELS]/255.0f;
+					val *= val;
+					activity += val;
+					pd->addFloat( val );
+				}
+				PROFILE_SECTION_POP();
+				{
+					PROFILE_THIS_BLOCK("pd->finish");
+					//					ofLog( OF_LOG_VERBOSE, "pd->finish() should send %s", message.c_str() );
+					pd->finish();
+				}
 			}
 			PROFILE_SECTION_POP();
+
+			// send total activity
+			activity /= TINY_HEIGHT*TINY_WIDTH;
+
+			PROFILE_SECTION_PUSH("/activity");
+			pd->startList( "pixels" );
+			pd->addSymbol( "/activity" );
+			pd->addFloat( activity );
+			pd->finish();
+			PROFILE_SECTION_POP();
+
+
+			// send next bit of osc
+			PROFILE_SECTION_PUSH("/pixelsum");
+			pd->startList( "pixels" );
+			pd->addSymbol( "/pixelsum" );
+			// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
+			for ( int j=0; j<TINY_WIDTH; j++ )
 			{
-				PROFILE_THIS_BLOCK("pd->finish");
-				//					ofLog( OF_LOG_VERBOSE, "pd->finish() should send %s", message.c_str() );
-				pd->finish();
+				float total = 0.0f;
+				float centroid = 0.0f;
+				// sum the column
+				for ( int i=0; i<TINY_HEIGHT; i++ )
+				{
+					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
+					total += val;
+					centroid += i*val;
+				}
+				centroid /= TINY_HEIGHT;
+				total /= TINY_HEIGHT;
+
+				pd->addFloat( centroid );
+				pd->addFloat( total );
 			}
+			pd->finish();
+			PROFILE_SECTION_POP();
 		}
-		PROFILE_SECTION_POP();
-		
-		// send total activity
-		activity /= TINY_HEIGHT*TINY_WIDTH;
-		
-		PROFILE_SECTION_PUSH("/activity");
-		pd->startList( "pixels" );
-		pd->addSymbol( "/activity" );
-		pd->addFloat( activity );
-		pd->finish();
-		PROFILE_SECTION_POP();
-		
-		
-		// send next bit of osc
-		PROFILE_SECTION_PUSH("/pixelsum");
-		pd->startList( "pixels" );
-		pd->addSymbol( "/pixelsum" );
-		// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
-		for ( int j=0; j<TINY_WIDTH; j++ )
-		{
-			float total = 0.0f;
-			float centroid = 0.0f;
-			// sum the column
-			for ( int i=0; i<TINY_HEIGHT; i++ )
-			{
-				float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
-				total += val;
-				centroid += i*val;
-			}
-			centroid /= TINY_HEIGHT;
-			total /= TINY_HEIGHT;
-			
-			pd->addFloat( centroid );
-			pd->addFloat( total );
-		}
-		pd->finish();
-		PROFILE_SECTION_POP();
-	}
 
 #ifdef SCREEN
-	
-	PROFILE_SECTION_PUSH("screen");
-	
-	//	ofLog(OF_LOG_NOTICE, "drawing to screen");
-	screen.display8( 0, 0, 
-					grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
-					grayDiffSmall.getPixels() );
-	
-	input.update();
 
-#ifdef NO_WINDOW
-	drawGui();
+		PROFILE_SECTION_PUSH("screen");
+
+		//	ofLog(OF_LOG_NOTICE, "drawing to screen");
+		screen.display8( 0, 0, 
+				grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
+				grayDiffSmall.getPixels() );
+
+		input.update();
+		if ( input.wasPressed() )
+			gui.pointerDown( input.getX(), input.getY() );
+		if ( input.isDown() )
+			WatterottScreen::get()->fillRect( input.getX()-1, input.getY()-1, 3, 3, ofColor::green );
+
+		drawGui();
+
+		PROFILE_SECTION_POP();
 #endif
-	
-	PROFILE_SECTION_POP();
-#endif
+	}
 }
 
 

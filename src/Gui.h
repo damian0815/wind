@@ -94,7 +94,7 @@ class Gui
 {
 public:
 	
-	Gui() { num_root_buttons = 0; instance = this; };
+	Gui() { first_draw = true; num_root_buttons = 0; instance = this; };
 	~Gui() { instance = NULL; };
 	Gui* get() { return instance; }
 	
@@ -138,7 +138,7 @@ private:
 	
 	int width, height;
 	int num_root_buttons;
-	bool text_dirty;
+	bool first_draw;
 	
 	GuiListener* listener;
 	

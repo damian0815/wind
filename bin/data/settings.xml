@@ -1,15 +1,17 @@
 <app>
+    <input>
+        <use_video>0</use_video>
+        <video_filename>honf-present.m4v</video_filename>
+        <capture_device>1</capture_device>
+        <capture_width>640</capture_width>
+        <capture_height>480</capture_height>
+    </input>
     <contrast_1>0.916224</contrast_1>
     <contrast_2>9.260994</contrast_2>
     <stride>7</stride>
     <offset>0</offset>
     <step>1.250000</step>
-    <input>
-        <use_video>0</use_video>
-        <video_filename>honf-present.m4v</video_filename>
-        <capture_device>1</capture_device>
-        <which_hsv_channel>3</which_hsv_channel>
-    </input>
+    <which_hsv_channel>3</which_hsv_channel>
     <osc>
         <host></host>
         <port>0</port>
