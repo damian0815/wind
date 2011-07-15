@@ -34,7 +34,7 @@ public:
 	void draw( bool drawVisible );
 	
 	bool isVisible() { return visible; }
-	void setVisible( bool vis ) { visible = vis; dirty = true; }
+	void setVisible( bool vis ) { visible = vis; dirty = true; hit = false;}
 	
 	bool isOpen() { return open; }
 	void setOpen( bool tf );
@@ -47,6 +47,7 @@ public:
 	int getNextXPos();
 	int getNextYPos();
 	
+	void markHit( bool tf );
 private:
 	string title, tag;
 	bool dirty;
@@ -54,7 +55,9 @@ private:
 	bool visible;
 	int x, y;
 	int depth;
+	bool hit;
 	
+
 	vector<GuiButton*> children;
 };
 

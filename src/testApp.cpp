@@ -51,6 +51,8 @@ void testApp::setup(){
 	capture_width = data.getValue("input:capture_width", DEFAULT_CAPTURE_WIDTH );
 	capture_height = data.getValue("input:capture_height", DEFAULT_CAPTURE_HEIGHT );
 	
+	wind.setup( data );
+
 	if ( !use_video )
 	{
 		vidGrabber.setVerbose(true);
@@ -87,7 +89,6 @@ void testApp::setup(){
 
 
 
-	wind.setup( data );
 
 	ofSoundStreamSetup( 2,0,this, FREQ, ofxPd::getBlockSize(), 4 );
 

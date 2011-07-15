@@ -73,7 +73,7 @@ void Wind::setup( ofxXmlSettings& data )
 	gui.addButton( "view_focus", "/\\", "view_focus_up" );
 	gui.addButton( "view_focus", "\\/", "view_focus_down" );
 	gui.addButton( "view", "Calc", "view_calc" );
-	gui.addButton( "view_calc", "GrayCnt", "view_gray_contrasted" );
+	gui.addButton( "view_calc", "GrayCn", "view_gray_contrasted" );
 	gui.addButton( "view_calc", "Diff", "view_diff" );
 	
 	gui.addButton( "Calc", "calc" );
@@ -104,12 +104,13 @@ void Wind::setup( ofxXmlSettings& data )
 	
 	gui.addButton( "Sys", "sys" );
 	gui.addButton( "sys", "Save", "sys_save" );
-	gui.addButton( "sys", "Shutdown", "sys_shutdown" );
-	gui.addButton( "sys_shutdown", "Confirm", "sys_shutdown_y" );
+	gui.addButton( "sys", "S/down", "sys_shutdown" );
+	gui.addButton( "sys_shutdown", "S/down", "sys_shutdown_y" );
 	gui.addButton( "sys_shutdown", "Cancel", "sys_shutdown_n" );
 	gui.addButton( "sys", "Reboot", "sys_reboot" );
-	gui.addButton( "sys_reboot", "Confirm", "sys_reboot_y" );
+	gui.addButton( "sys_reboot", "Reboot", "sys_reboot_y" );
 	gui.addButton( "sys_reboot", "Cancel", "sys_reboot_n" );
+	gui.addButton( "sys", "CyWifi", "sys_cyclewifi" );
 	
 	
 	gui.addValue( "Contr1", "cont1", "%.2f" );
@@ -360,16 +361,16 @@ void Wind::update( unsigned char* pixels, int width, int height )
 		PROFILE_SECTION_PUSH("screen");
 
 		//	ofLog(OF_LOG_NOTICE, "drawing to screen");
-		screen.display8( 0, 0, 
+		/*screen.display8( 0, 0, 
 				grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
-				grayDiffSmall.getPixels() );
+				grayDiffSmall.getPixels() );*/
 
 		input.update();
 		if ( input.wasPressed() )
 			gui.pointerDown( input.getX(), input.getY() );
-		if ( input.isDown() )
-			WatterottScreen::get()->fillRect( input.getX()-1, input.getY()-1, 3, 3, ofColor::green );
-
+		/*if ( input.isdown() )
+			watterottscreen::get()->fillrect( input.getx()-1, input.gety()-1, 3, 3, ofcolor::green );
+*/
 		drawGui();
 
 		PROFILE_SECTION_POP();
@@ -380,7 +381,7 @@ void Wind::update( unsigned char* pixels, int width, int height )
 
 bool Wind::buttonPressCallback( GuiButton* b )
 {
-	ofLog( OF_LOG_VERBOSE, "button pressed: %s (%s)", b->getTitle().c_str(), b->getTag().c_str() );
+	//oflog( of_log_verbose, "button pressed: %s (%s)", b->gettitle().c_str(), b->gettag().c_str() );
 	bool close_menu = false;
 	
 	string tag = b->getTag();
@@ -399,14 +400,22 @@ bool Wind::buttonPressCallback( GuiButton* b )
 		yoffs = colorImg.getHeight()/2-60;
 	}
 	else if ( tag == "view_focus_left" )
+	{
 		xoffs = max(0,xoffs-10);
+	}
 	else if ( tag == "view_focus_right" )
+	{
 		xoffs = min(int(colorImg.getWidth()-160),xoffs+10);
+	}
 	else if ( tag == "view_focus_up" )
+	{
 		yoffs = max(0,yoffs-10);
+	}
 	else if ( tag == "view_focus_down" )
+	{
 		yoffs = min(int(colorImg.getHeight()-120),yoffs+10);
-	
+	}
+
 	else if ( tag == "view_none" )
 		showing_image = SI_NONE;
 	
@@ -450,15 +459,6 @@ bool Wind::buttonPressCallback( GuiButton* b )
 	else if ( tag == "calc_hsv_setall" )
 		setWhichHSVChannel(3);
 	
-	/*
-	 gui.addButton( "sys", "Save", "sys_save" );
-	 gui.addButton( "sys", "Shutdown", "sys_shutdown" );
-	 gui.addButton( "sys_shutdown", "Confirm", "sys_shutdown_y" );
-	 gui.addButton( "sys_shutdown", "Cancel", "sys_shutdown_n" );
-	 gui.addButton( "sys", "Reboot", "sys_reboot" );
-	 gui.addButton( "sys_reboot", "Confirm", "sys_reboot_y" );
-	 gui.addButton( "sys_reboot", "Cancel", "sys_reboot_n" );
-*/	 
 	else if ( tag == "sys_save" )
 	{
 		((testApp*)ofGetAppPtr())->saveSettings();
@@ -470,6 +470,11 @@ bool Wind::buttonPressCallback( GuiButton* b )
 		system("sudo poweroff");
 	else if ( tag == "sys_reboot_y" )
 		system("sudo reboot");
+	else if ( tag == "sys_cyclewifi" )
+	{
+		system("sudo cyclewlan0" );
+		close_menu = true;
+	}
 	
 	return close_menu;
 }
@@ -477,6 +482,7 @@ bool Wind::buttonPressCallback( GuiButton* b )
 
 void Wind::exit()
 {
+	screen.clear( ofColor::green );
 	pd->sendSymbol( "pixels", "/abort" );
 	
 	free( tiny );
@@ -502,6 +508,7 @@ void Wind::saveSettings( ofxXmlSettings& data )
 	data.addValue( "port", port );
 	data.popTag();
 	
+	input.saveCalibration( data );
 	
 }
 
@@ -512,26 +519,41 @@ void Wind::drawGui()
 	{
 		gui.draw();
 
-#ifndef NO_WINDOW
 		if ( showing_image == SI_FOCUS )
 		{
+#ifndef NO_WINDOW
 			colorImg.setROI( xoffs, yoffs, 160, 120 );
 			colorImg.drawROI( 0, 0 );
 			colorImg.resetROI();
+#else
+			WatterottScreen::get()->display888( 0, 0, 160, 120, colorImg.getPixels(), xoffs, yoffs, colorImg.getWidth()*3 );
+#endif
 		}
 		else if ( showing_image == SI_DIFF )
 		{
+#ifndef NO_WINDOW
 			grayDiff.draw( 0, 0, 160, 120 );
+#else
+			WatterottScreen::get()->display8( 0, 0, 160, 120, grayDiff.getPixels(), xoffs, yoffs, grayDiff.getWidth() );
+#endif
 		}
 		else if ( showing_image == SI_GRAY_CONTRASTED )
 		{
+#ifndef NO_WINDOW
 			grayImageContrasted.draw( 0, 0, 160, 120 );
+#else
+			WatterottScreen::get()->display8( 0, 0, 160, 120, grayImageContrasted.getPixels(), xoffs, yoffs, grayImageContrasted.getWidth() );
+#endif
 		}
 		else if ( showing_image == SI_NONE && prev_showing_image != showing_image )
 		{
+#ifndef NO_WINDOW
 			ofSetHexColor( 0x808080 );
 			ofFill();
 			ofRect( 0, 0, 160, 120 );
+#else
+			WatterottScreen::get()->fillRect( 0, 0, 160, 120, ofColor( 128 ) );
+#endif
 		}
 		prev_showing_image = showing_image;
 		
@@ -543,11 +565,15 @@ void Wind::drawGui()
 			{
 				ofColor c;
 				c.set( tiny[i*TINY_WIDTH+j], 255 );
+#ifndef NO_WINDOW
 				ofSetColor( c );
 				ofRect( 180+j*4, i*4, 4, 4 );
+#else
+				WatterottScreen::get()->fillRect( 180+j*4, i*4, 4, 4, c );
+#endif
+
 			}
 		}
-#endif
 	}
 	
 }

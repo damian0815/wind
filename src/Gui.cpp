@@ -11,9 +11,10 @@
 #include "Gui.h"
 #include "ofMain.h"
 #include "Constants.h"
+#include "Font8x12.h"
 #include "WatterottScreen.h"
 
-static int BUTTON_GAP = 5;
+static int BUTTON_GAP = 3;
 static int BUTTON_WIDTH = 50;
 static int BUTTON_HEIGHT = 18;
 
@@ -22,6 +23,7 @@ static int VALUE_HEIGHT = 15;
 
 static int MAX_LEVEL_COLOR = 3;
 static int LEVEL_COLORS[4] = { 0xFFC953, 0x96C0B1, 0xC4A093, 0x98B29C };
+static const ofColor BACKGROUND_COLOUR = ofColor( 128 );
 
 Gui* Gui::instance = NULL;
 
@@ -89,6 +91,8 @@ void Gui::pointerDown( int x, int y )
 	{
 		if ( buttons[i]->isVisible() && buttons[i]->checkHit( x, y ) )
 		{
+			// flash
+			buttons[i]->markHit(true);
 			// handle non-leaf (hierarchy)
 			vector<GuiButton*> siblings = getSiblings( buttons[i] );
 			if ( buttons[i]->isOpen() )
@@ -113,7 +117,14 @@ void Gui::pointerDown( int x, int y )
 			}
 			
 			// tell listener
-			listener->buttonPressCallback( buttons[i] );
+			bool close_menu = listener->buttonPressCallback( buttons[i] );
+			if ( close_menu )
+			{
+				for ( int j=0; j<root_buttons.size(); j++ )
+				{
+					root_buttons[j]->setOpen( false );
+				}
+			}
 			// must break, as buttonPressCallback might change buttons
 			break;
 		}
@@ -150,7 +161,7 @@ void Gui::draw()
 #ifdef SCREEN
 	if ( first_draw )
 	{
-		WatterottScreen::get()->clear( ofColor(128) );
+		WatterottScreen::get()->clear( BACKGROUND_COLOUR );
 		first_draw = false;
 	}
 #endif
@@ -207,7 +218,7 @@ GuiButton* Gui::getParent( GuiButton* child )
 
 
 GuiButton::GuiButton( string _title, string _tag, int _x, int _y, int _depth )
-: title( _title ), tag( _tag ), x(_x), y(_y), depth(_depth), dirty( false ), open( false ), visible( false )
+: title( _title ), tag( _tag ), x(_x), y(_y), depth(_depth), dirty( false ), open( false ), visible( false ), hit(false)
 {	
 }
 
@@ -217,15 +228,26 @@ bool GuiButton::checkHit( int hx, int hy )
 	return ( hx >= x && hy >= y && hx <= (x+BUTTON_WIDTH) && hy <=y+BUTTON_HEIGHT );		
 }
 
+void GuiButton::markHit( bool tf )
+{
+	if ( hit != tf )
+	{
+		hit = tf;
+		dirty = true;
+	}
+}
+
 void GuiButton::draw( bool drawVisible )
 {
 	if ( visible && drawVisible )
 	{
-		ofColor bg_colour = ofColor::fromHex( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
+		ofColor bg_colour = hit?(ofColor(64)):(ofColor::fromHex( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] ));
+		ofColor text_colour = hit?(ofColor::white):(ofColor::black);
 #ifdef NO_WINDOW
-		WatterottScreen::get()->drawRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
 		WatterottScreen::get()->fillRect( x+1, y+1, BUTTON_WIDTH-2, BUTTON_HEIGHT-2, bg_colour ); 
-		WatterottScreen::get()->drawString( title, x+3, y+3, ofColor::black, bg_colour );
+		int centre = (BUTTON_WIDTH-2)/2 - title.length()*FONT_WIDTH/2;
+		WatterottScreen::get()->drawString( title, x+2+centre, y+3, text_colour, bg_colour );
+		WatterottScreen::get()->drawRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
 #else
 		ofSetColor( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
 		ofFill();
@@ -236,11 +258,12 @@ void GuiButton::draw( bool drawVisible )
 		ofDrawBitmapString( title, ofPoint( x+1, y+BUTTON_HEIGHT-3 ) );
 #endif
 		dirty = false;
+		markHit( false );
 	}
 	else if ( !visible && !drawVisible )
 	{
 #ifdef NO_WINDOW
-		WatterottScreen::get()->fillRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
+		WatterottScreen::get()->fillRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, BACKGROUND_COLOUR );
 #else
 		ofSetColor( 0, 0, 0 );
 		ofFill();
@@ -291,14 +314,20 @@ int GuiButton::getNextYPos()
 
 void GuiValue::draw()
 {
-	ofSetHexColor( 0x000000 );
+	char buf[512];
+	sprintf( buf, format.c_str(), value );
+#ifdef NO_WINDOW
+	WatterottScreen::get()->fillRect( x, y, VALUE_WIDTH, VALUE_HEIGHT, BACKGROUND_COLOUR );
+	WatterottScreen::get()->drawString( title, x, y+3, ofColor::white, BACKGROUND_COLOUR );
+	WatterottScreen::get()->drawString( buf, x+60, y+3, ofColor::white, BACKGROUND_COLOUR );
+#else
+	ofSetColor( BACKGROUND_COLOUR );
 	ofFill();
 	ofRect( x, y, VALUE_WIDTH, VALUE_HEIGHT );
 	ofSetHexColor( 0xffffff );
 	ofDrawBitmapString( title, x, y+(VALUE_HEIGHT-3) );
-	char buf[512];
-	sprintf( buf, format.c_str(), value );
 	ofDrawBitmapString( buf, x+60, y+(VALUE_HEIGHT-3) );
+#endif
 	
 	dirty = false;
 }

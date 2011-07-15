@@ -26,10 +26,10 @@ public:
 
 	/// as display565 but pixels are (grayscale, 8 bit); 
 	/// offset and stride allow a sub-rect of pixels* with different w/h to be used as source: 
-	///  set offset to (sub_y*pixels_width + sub_x), stride to pixels_width
-	void display8( int x0, int y0, int w, int h, uint8_t* pixels, int offset=0, int stride=-1 );
-	/// as display8 but pixels are RGB 24 bit and offset and stride are given in bytes (ie *3)
-	void display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset=0, int stride=-1 );
+	///  set stride to pixels_stride(/width), offset_x and offset_y to offset into image
+	void display8( int x0, int y0, int w, int h, uint8_t* pixels, int offset_x=0, int offset_y=0, int stride=-1 );
+	/// as display8 but pixels are RGB 24 bit and stride is given in bytes (ie *3)
+	void display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset_x=0, int offset_y=0, int stride=-1 );
 
 	int getWidth() { return 320; }
 	int getHeight() { return 240; }

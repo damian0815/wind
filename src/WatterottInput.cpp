@@ -198,7 +198,7 @@ void WatterottInput::update()
 		cal_y = ((cal_matrix.d * raw_x) + (cal_matrix.e * raw_y) + cal_matrix.f) / cal_matrix.div;
 		cal_y = max(0,min(cal_y,WatterottScreen::get()->getHeight()-1));
 
-		printf("  got raw %4i,%4i -> cal %4i,%4i \n", raw_x, raw_y, cal_x, cal_y );
+		//printf("  got raw %4i,%4i -> cal %4i,%4i \n", raw_x, raw_y, cal_x, cal_y );
 		
 	}
 	else

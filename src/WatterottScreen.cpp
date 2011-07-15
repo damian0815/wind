@@ -64,15 +64,17 @@ WatterottScreen::~WatterottScreen()
 	instance = NULL;
 }
 
-void WatterottScreen::display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset, int stride )
+void WatterottScreen::display888( int x0, int y0, int w, int h, uint8_t* pixels, int offset_x, int offset_y, int stride )
 {
 	uint8_t* pixels565 = (uint8_t*)shared_working_buf;
 
 	// convert 888 to 565
+	uint32_t jump = 0;
+	if ( stride == -1 )
+		stride = w*3;
+	jump = stride-(w*3);
+	uint32_t offset = offset_x*3 + offset_y*stride;
 	uint8_t* source = pixels+offset;
-	int jump = 0;
-	if ( stride != -1 )
-		jump = stride-(w*3);
 	
 	uint8_t* dest = pixels565;
 	for ( int i=0; i<h; i++ )
@@ -93,7 +95,7 @@ void WatterottScreen::display888( int x0, int y0, int w, int h, uint8_t* pixels,
 	
 }
 
-void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels, int offset, int stride )
+void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels, int offset_x, int offset_y, int stride )
 {
 	static uint8_t* pixels565 = NULL;
 	static size_t pixels565_size = 0;
@@ -108,8 +110,9 @@ void WatterottScreen::display8( int x0, int y0, int w, int h, uint8_t* pixels, i
 	}
 
 	// convert 8 to 565
+	uint32_t offset = offset_x + offset_y*stride;
 	uint8_t* source = pixels+offset;
-	int jump = 0;
+	uint32_t jump = 0;
 	if ( stride != -1 )
 		jump = stride-w;
 	
@@ -445,7 +448,7 @@ void WatterottScreen::drawRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_
 
 void WatterottScreen::fillRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, ofColor colour_of )
 {
-	printf(" fillRect %i %i %i %i\n", x0, y0, width, height );
+	//printf(" fillRect %i %i %i %i\n", x0, y0, width, height );
 	uint16_t size;
 	uint16_t tmp;
 	
