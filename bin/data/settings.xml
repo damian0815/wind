@@ -16,4 +16,9 @@
         <host></host>
         <port>0</port>
     </osc>
+	<input_calibration>
+		<a>-160580</a><b>-7700</b><c>14375700</c>
+		<d>-2600</d><e>120400</e><f>-116703720</f>
+		<div>-460806</div>
+	</input_calibration>
 </app>
