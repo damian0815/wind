@@ -216,6 +216,7 @@ void GuiButton::draw( bool drawVisible )
 #ifdef NO_WINDOW
 		WatterottScreen::get()->drawRect( x, y, BUTTON_WIDTH, BUTTON_HEIGHT, ofColor::black );
 		WatterottScreen::get()->fillRect( x+1, y+1, BUTTON_WIDTH-1, BUTTON_HEIGHT-1, ofColor::fromHex( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] ) );
+		WatterottScreen::get()->drawString( title, x+1, y+1, ofColor::black );
 #else
 		ofSetHexColor( LEVEL_COLORS[min(MAX_LEVEL_COLOR,depth)] );
 		ofFill();

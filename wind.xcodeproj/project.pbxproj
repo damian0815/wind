@@ -12,6 +12,7 @@
 		2D87F7B113CE012A00C414EC /* WatterottScreen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F7AF13CE012A00C414EC /* WatterottScreen.cpp */; };
 		2D87F89113CEDA1B00C414EC /* Wind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F89013CEDA1B00C414EC /* Wind.cpp */; };
 		2D87F99813CF4F3F00C414EC /* WatterottInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F99713CF4F3F00C414EC /* WatterottInput.cpp */; };
+		2D87F9F513CF7A4A00C414EC /* Font8x12.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2D87F9F413CF7A4A00C414EC /* Font8x12.cpp */; };
 		2DA682EC139E935A00278E68 /* opencv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DA68044139E935600278E68 /* opencv.a */; };
 		2DA68303139E935A00278E68 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DA68060139E935700278E68 /* ofxCvColorImage.cpp */; };
 		2DA68304139E935A00278E68 /* ofxCvContourFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DA68063139E935700278E68 /* ofxCvContourFinder.cpp */; };
@@ -163,6 +164,8 @@
 		2D87F89813CEDE5D00C414EC /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
 		2D87F99613CF4F3F00C414EC /* WatterottInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WatterottInput.h; sourceTree = "<group>"; };
 		2D87F99713CF4F3F00C414EC /* WatterottInput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WatterottInput.cpp; sourceTree = "<group>"; };
+		2D87F9F313CF7A4A00C414EC /* Font8x12.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Font8x12.h; sourceTree = "<group>"; };
+		2D87F9F413CF7A4A00C414EC /* Font8x12.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Font8x12.cpp; sourceTree = "<group>"; };
 		2DA67FA3139E935600278E68 /* cv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cv.h; sourceTree = "<group>"; };
 		2DA67FA4139E935600278E68 /* cv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cv.hpp; sourceTree = "<group>"; };
 		2DA67FA5139E935600278E68 /* cvaux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cvaux.h; sourceTree = "<group>"; };
@@ -780,6 +783,8 @@
 				2D87F58213CDD4B100C414EC /* Gui.h */,
 				2D87F99613CF4F3F00C414EC /* WatterottInput.h */,
 				2D87F99713CF4F3F00C414EC /* WatterottInput.cpp */,
+				2D87F9F313CF7A4A00C414EC /* Font8x12.h */,
+				2D87F9F413CF7A4A00C414EC /* Font8x12.cpp */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -974,6 +979,7 @@
 				2D87F7B113CE012A00C414EC /* WatterottScreen.cpp in Sources */,
 				2D87F89113CEDA1B00C414EC /* Wind.cpp in Sources */,
 				2D87F99813CF4F3F00C414EC /* WatterottInput.cpp in Sources */,
+				2D87F9F513CF7A4A00C414EC /* Font8x12.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

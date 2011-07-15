@@ -28,7 +28,12 @@
 #include <algorithm>
 #include <math.h>
 
+#include "Font8x12.h"
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+static const int LCD_WIDTH = 320;
+static const int LCD_HEIGHT = 240;
 
 WatterottScreen* WatterottScreen::instance = NULL;
 
@@ -44,6 +49,13 @@ uint16_t WatterottScreen::rgb565( float r, float g, float b )
 	//	return ( (uint16_t(r*0b11111)<<11) | (uint16_t(g*0b111111)<<5) | uint16_t(b*0b11111) );
 }
 
+uint16_t WatterottScreen::rgb565( uint8_t r, uint8_t g, uint8_t b )
+{
+	uint8_t out[2];
+	out[1] =  (r&0b11111000) | (g >> 5);
+	out[2] = ((g&0b11111100) << 5) | (b >> 3);
+	returnn *((uint16_t*)c);
+}
 
 static uint8_t mode;
 static uint8_t bits = 8;
@@ -56,7 +68,7 @@ WatterottScreen::WatterottScreen( )
 : fd(-1)
 {
 	instance = this;
-	shared_working_buf = (uint16_t*)malloc( 320*240*2 );
+	shared_working_buf = (uint16_t*)malloc( LCD_WIDTH*LCD_HEIGHT*2 );
 }
 
 WatterottScreen::~WatterottScreen()
@@ -221,7 +233,7 @@ void WatterottScreen::reset()
 
 
 	// orientation
-	writeCommand( 0x16, 0xa8 );
+	writeCommand( 0x16, 0xa8 ); // upside down = 0x68
 
 }
 
@@ -542,17 +554,22 @@ bool WatterottScreen::setup( const char* device, uint8_t _mode, uint32_t _speed 
 
 	//WatterottScreen screen(fd);
 	reset();
+	clear( ofColor::black );
 
 	return true;
 }
 
+void WatterottScreen::clear( ofColor clear_colour = ofColor::black )
+{
+	fillRect( 0, 0, LCD_WIDTH, LCD_HEIGHT, clear_colour );
+}
 
 
 void WatterottScreen::drawRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height, ofColor color)
 {
 	fillRect(x0, y0, 		1, height, color);
-	fillRect(x0, y0+height, width, 1, color);
-	fillRect(x0+width, y0, 	1, height, color);
+	fillRect(x0, y0+height-1, width, 1, color);
+	fillRect(x0+width-1, y0, 1, height, color);
 	fillRect(x0, y0, 		width, 1, color);
 	
 	return;
@@ -565,14 +582,14 @@ void WatterottScreen::fillRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_
 	uint16_t size;
 	uint16_t tmp;
 	
-	if((x0+width >= 320) ||
-	   (y0+height >= 240))
+	if((x0+width >= LCD_WIDTH) ||
+	   (y0+height >= LCD_HEIGHT))
 	{
 		return;
 	}
 
 	// convert colour to 565
-	uint16_t colour = rgb565( (colour_of.r)/255, float(colour_of.g)/255, float(colour_of.b)/255 );
+	uint16_t colour = rgb565( colour_of );
 	uint16_t* pixels565 = (uint16_t*)shared_working_buf;
 	
 	int count = width*height;
@@ -585,6 +602,50 @@ void WatterottScreen::fillRect(uint16_t x0, uint16_t y0, uint16_t width, uint16_
 	//printf(" fillRect done: count %i\n", count );
 	
 	return;
+}
+
+// adapted from Watterott MI0283QT2 Arduino library (MI0283QT2.cpp)
+
+void WatterottScreen::drawString( string text, uint16_t x, uint16_t y, ofColor colour, ofColor bg_colour )
+{
+	for ( int i=0; i<text.length(); i++ )
+	{
+		x = drawChar( text[i], x, y, colour, bg_colour );
+		if ( x >= LCD_WIDTH )
+			break;
+	}
+}
+
+uint16_t WatterottScreen::drawChar( char c, uint16_t x, uint16_t y, ofColor colour_of, ofColor bg_colour_of )
+{
+	uint8_t i = (uint8_t)c;
+	const uint8_t* ptr = FONT_DATA[(i-FONT_START)*(FONT_HEIGHT)];
+	
+	uint8_t width = FONT_WIDTH;
+	uint8_t height = FONT_HEIGHT;
+	
+	// convert of colours to 565
+	uint16_t colour = rgb565( colour_of );
+	uint16_t bg_colour = rgb565( bg_colour_of );
+	
+	int ret = x+width;
+	if ( ret >= LCD_WIDTH )
+		return LCD_WIDTH;
+	
+	uint16_t* out = shared_working_buf;
+	for ( ; height!=0; height-- )
+	{
+		data = (*ptr++);
+		// move across bit by bit
+		for ( uint8_t mask=(1<<(width-1)); mask!=0; mask>>=1 )
+		{
+			(*out++) = (data & mask)?colour:bg_colour;
+		}
+	}
+	
+	display565( x, y, width, height, shared_working_buf );
+	
+	return ret;
 }
 
 

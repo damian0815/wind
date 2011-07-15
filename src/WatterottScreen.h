@@ -19,6 +19,7 @@ public:
 	/// open ioctl to device (eg /dev/spidev3.1), with given mode
 	/// (eg SPI_CPHA | SPI_CPOL); communicate at given speed (bps)
 	bool setup( const char* device, uint8_t mode=0, uint32_t speed=500000 );
+	
 
 	/// display pixels at x0, y0 on the screen. pixels is 5-6-5 format as returned by rgb565()
 	void display565( int x0, int y0, int w, int h, uint8_t* pixels );
@@ -34,15 +35,20 @@ public:
 	int getHeight() { return 240; }
 
 	/// return a 5-6-5 uint16_t for the colour r,g,b ([0..1])
-	static uint16_t rgb565( float r, float g, float b );
+	uint16_t rgb565( float r, float g, float b );
+	uint16_t rgb565( uint8_t r, uint8_t g, uint8_t b );
+	uint16_t rgb565( ofColor c ) { return rgb565( c.r, c.b, c.g ); }
 
 
-	/// drawing code
+	/// drawing
+	void clear( ofColor clear_colour = ofColor::black );
 	void drawRect( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour );
 	void fillRect( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, ofColor colour );
+	void drawString( string text, uint16_t x, uint16_t y, ofColor colour, ofColor bg_colour=ofColor::black );
 
 private:
 	void reset();
+	uint16_t drawChar( char c, uint16_t x, uint16_t y, ofColor colour, ofColor bg_colour=ofColor::black );
 	
 	// tx (and rx if specified) should be count bytes long
 	int writeSPI( uint8_t* tx, int count, bool toggleCSOnEnd=true, uint8_t* rx=NULL, uint32_t override_speed=0 );
