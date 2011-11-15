@@ -291,7 +291,7 @@ void Wind::update( unsigned char* pixels, int width, int height )
 				// one row at a time
 				//				message += "/pixelrow ";
 				PROFILE_SECTION_PUSH("message setup");
-				pd->startMessage( "pixels", "/pixelrow" );
+				pd->startMsg( "pixels", "/pixelrow" );
 				//				pd->addSymbol( "/pixelrow" );
 				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
 				// row number
@@ -482,7 +482,9 @@ bool Wind::buttonPressCallback( GuiButton* b )
 
 void Wind::exit()
 {
+#ifdef SCREEN
 	screen.clear( ofColor::green );
+#endif
 	pd->sendSymbol( "pixels", "/abort" );
 	
 	free( tiny );
@@ -507,9 +509,10 @@ void Wind::saveSettings( ofxXmlSettings& data )
 	data.addValue( "host", host );
 	data.addValue( "port", port );
 	data.popTag();
-	
+
+#ifdef SCREEN
 	input.saveCalibration( data );
-	
+#endif
 }
 
 void Wind::drawGui()
