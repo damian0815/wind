@@ -11,4 +11,5 @@ see http://www.frey.co.nz/projects/wind for more information
 damian@frey.co.nz
 
 Note:
+- uses OpenFrameworks version 007
 - uses the 0062 tag version of ofxPd: https://github.com/danomatika/ofxPd/tree/0062
