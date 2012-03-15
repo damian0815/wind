@@ -88,6 +88,7 @@ private:
 class GuiListener
 {
 public: 
+	virtual ~GuiListener() {};
 	/// return true if gui should close on press
 	virtual bool buttonPressCallback( GuiButton* button ) { return false ;};
 };

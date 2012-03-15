@@ -19,13 +19,12 @@
 #define SCREEN
 #endif
 
-#define TINY_WIDTH 8
-#define TINY_HEIGHT 6
-
-#define CAM_CAPTURE
-
 #define NEW_TINY
 
 static const int FREQ = 44100;
 
 
+#ifndef TARGET_LINUX
+//#define OFFLINE
+#define DUMMY_AUDIO
+#endif

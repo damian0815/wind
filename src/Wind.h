@@ -26,11 +26,16 @@
 class Wind : public GuiListener
 {
 public:
+	~Wind();
 	/// pixels is RGB width x height
-	void update( unsigned char* pixels, int width, int height );
-	void setup( ofxXmlSettings& data );
+	void setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height );
+
+	bool updateTiny( unsigned char* pixels, int width, int height );
+	void setTiny( unsigned char* _tiny );
+	
+	void sendTiny();
+	
 	void draw();
-	void exit();
 	
 	void keyPressed  (int key);
 	void mousePressed(int x, int y, int button);
@@ -49,6 +54,8 @@ public:
 	void setStep( float s ) { step = max(0.25f,s); gui.setValue("step", step ); }
 	void setWhichHSVChannel( int which ) { which_hsv_channel = which; gui.setValue("hsv", which); }
 
+	unsigned char* getTiny() { return tiny; }
+	
 private:
 	
 	void drawGui();
@@ -88,13 +95,12 @@ private:
 	
 	bool draw_debug;
 	string message;
-	bool first_frame;
-	
 	float data_send_start_timer;
 	
 	ofxPd* pd;
 	
 	unsigned char* tiny;
+	int tiny_width, tiny_height;
 	
 #ifdef SCREEN
 	WatterottScreen screen;
@@ -107,5 +113,4 @@ private:
 	int xoffs, yoffs;
 	Gui gui;
 	
-
 };

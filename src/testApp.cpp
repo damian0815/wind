@@ -29,8 +29,8 @@ const static int DEFAULT_CAPTURE_WIDTH = 640;
 const static int DEFAULT_CAPTURE_HEIGHT = 480;
 const static int DEFAULT_CAPTURE_DEVICE = 6;
 
-
-
+#define TINY_WIDTH_DEFAULT 8
+#define TINY_HEIGHT_DEFAULT 6
 
 //--------------------------------------------------------------
 void testApp::setup(){	 
@@ -51,7 +51,7 @@ void testApp::setup(){
 	capture_width = data.getValue("input:capture_width", DEFAULT_CAPTURE_WIDTH );
 	capture_height = data.getValue("input:capture_height", DEFAULT_CAPTURE_HEIGHT );
 	
-	wind.setup( data );
+	wind.setup( data, TINY_WIDTH_DEFAULT, TINY_HEIGHT_DEFAULT );
 
 	if ( !use_video )
 	{
@@ -90,7 +90,7 @@ void testApp::setup(){
 
 
 
-	ofSoundStreamSetup( 2,0,this, FREQ, ofxPd::getBlockSize(), 4 );
+	ofSoundStreamSetup( 2,0,this, FREQ, ofxPd::getBlockSize(), 8 );
 
 
 	PROFILE_SECTION_PUSH("setup");
@@ -105,7 +105,7 @@ void testApp::exit()
 {
 	printf("in testApp::exit()\n");
 	
-	wind.exit();
+	//wind.exit();
 	
 }
 
@@ -153,8 +153,9 @@ void testApp::update(){
 		}
 		PROFILE_SECTION_POP();
 
-		wind.update( pixels, w, h );
+		wind.updateTiny( pixels, w, h );
 		
+		wind.sendTiny();
 	}
 	else
 	{

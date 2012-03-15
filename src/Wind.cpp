@@ -30,20 +30,26 @@ static const int DEFAULT_HSV_CHANNEL = 3;
 
 
 
-void Wind::setup( ofxXmlSettings& data )
+void Wind::setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height )
 {
 	
-	tiny = (unsigned char*)malloc( TINY_WIDTH*TINY_HEIGHT );
+	tiny_width = _tiny_width;
+	tiny_height = _tiny_height;
+	
+	tiny = (unsigned char*)malloc( tiny_width*tiny_height );
 	
 	draw_debug = false;
-	first_frame = true;
 	
 	
 	pd = new ofxPd();
 	pd->init( 0,2,FREQ );
 	
 	
+#ifdef DUMMY_AUDIO
+	pd->openPatch( "sound3_dummy/_main.pd" );
+#else
 	pd->openPatch( "sound1/_main.pd" );
+#endif
 	
 	bLearnBakground = true;
 	threshold = 30;
@@ -135,11 +141,9 @@ void Wind::setup( ofxXmlSettings& data )
 	setStep(data.getValue( "step", DEFAULT_STEP ));
 	
 	
-	
-	
 }
 
-void Wind::update( unsigned char* pixels, int width, int height )
+bool Wind::updateTiny( unsigned char* pixels, int width, int height )
 {
 #ifdef SCREEN
 	if ( input.isCalibrating() )
@@ -150,12 +154,14 @@ void Wind::update( unsigned char* pixels, int width, int height )
 #endif
 	{
 
+#ifndef DUMMY_AUDIO
 		static bool pd_dsp_on = false;
 		if ( !pd_dsp_on && ofGetElapsedTimef() > 2.0f )
 		{
 			pd->dspOn();
 			pd_dsp_on = true;
 		}
+#endif
 
 		if ( colorImg.getWidth() == 0 )
 		{
@@ -166,7 +172,7 @@ void Wind::update( unsigned char* pixels, int width, int height )
 			grayBg.allocate(width, height);
 			grayDiff.allocate(width, height);
 			grayDiffSmall.allocate( width/4,height/4);
-			grayDiffTiny.allocate( TINY_WIDTH, TINY_HEIGHT );
+			grayDiffTiny.allocate( tiny_width, tiny_height );
 
 			hue.allocate( width, height );
 			saturation.allocate( width, height );
@@ -250,133 +256,121 @@ void Wind::update( unsigned char* pixels, int width, int height )
 #endif
 		PROFILE_SECTION_POP();
 
-
-
-
-		// send osc
-		if ( first_frame )
-		{
-			first_frame = false;
-			return;
-		}
-
-
-		if ( data_send_start_timer > 0.0f )
-		{
-			data_send_start_timer -= ofGetElapsedTimef();
-			printf("%f\n", data_send_start_timer );
-		}
-		else
-		{
-
-			PROFILE_THIS_BLOCK("to pd");
-
-			float activity = 0.0f;
-			//message = "";
-#ifdef NEW_TINY
-			unsigned char* pixels = tiny;
-#else
-			PROFILE_SECTION_PUSH("tiny to pixels");
-			unsigned char* pixels = grayDiffTiny.getPixels();
-			PROFILE_SECTION_POP();
-#endif
-
-			// stride will affect the way the pixels are distributed to oscillators
-			static const int TOTAL_PIXELS=TINY_WIDTH*TINY_HEIGHT;
-
-
-			PROFILE_SECTION_PUSH("pixelrow");
-			for ( int i=0; i< TINY_HEIGHT; i++ )
-			{
-				// one row at a time
-				//				message += "/pixelrow ";
-				PROFILE_SECTION_PUSH("message setup");
-				pd->startMessage( "pixels", "/pixelrow" );
-				//				pd->addSymbol( "/pixelrow" );
-				// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
-				// row number
-				pd->addFloat( i );
-				PROFILE_SECTION_POP();
-
-				// pixels
-				// all zeroes?
-				bool all_zeroes = true;
-				int index = offset+i*stride;
-				PROFILE_SECTION_PUSH("compile");
-				for ( int j=0; j<TINY_WIDTH; j++, index+=step )
-				{
-					float val = (float)pixels[index%TOTAL_PIXELS]/255.0f;
-					val *= val;
-					activity += val;
-					pd->addFloat( val );
-				}
-				PROFILE_SECTION_POP();
-				{
-					PROFILE_THIS_BLOCK("pd->finish");
-					//					ofLog( OF_LOG_VERBOSE, "pd->finish() should send %s", message.c_str() );
-					pd->finish();
-				}
-			}
-			PROFILE_SECTION_POP();
-
-			// send total activity
-			activity /= TINY_HEIGHT*TINY_WIDTH;
-
-			PROFILE_SECTION_PUSH("/activity");
-			pd->startList( "pixels" );
-			pd->addSymbol( "/activity" );
-			pd->addFloat( activity );
-			pd->finish();
-			PROFILE_SECTION_POP();
-
-
-			// send next bit of osc
-			PROFILE_SECTION_PUSH("/pixelsum");
-			pd->startList( "pixels" );
-			pd->addSymbol( "/pixelsum" );
-			// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
-			for ( int j=0; j<TINY_WIDTH; j++ )
-			{
-				float total = 0.0f;
-				float centroid = 0.0f;
-				// sum the column
-				for ( int i=0; i<TINY_HEIGHT; i++ )
-				{
-					float val = (float)pixels[i*TINY_HEIGHT+j]/255.0f;
-					total += val;
-					centroid += i*val;
-				}
-				centroid /= TINY_HEIGHT;
-				total /= TINY_HEIGHT;
-
-				pd->addFloat( centroid );
-				pd->addFloat( total );
-			}
-			pd->finish();
-			PROFILE_SECTION_POP();
-		}
-
+		
 #ifdef SCREEN
-
+		
 		PROFILE_SECTION_PUSH("screen");
-
+		
 		//	ofLog(OF_LOG_NOTICE, "drawing to screen");
 		/*screen.display8( 0, 0, 
-				grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
-				grayDiffSmall.getPixels() );*/
-
+		 grayDiffSmall.getWidth(), grayDiffSmall.getHeight(), 
+		 grayDiffSmall.getPixels() );*/
+		
 		input.update();
 		if ( input.wasPressed() )
 			gui.pointerDown( input.getX(), input.getY() );
 		/*if ( input.isdown() )
-			watterottscreen::get()->fillrect( input.getx()-1, input.gety()-1, 3, 3, ofcolor::green );
-*/
+		 watterottscreen::get()->fillrect( input.getx()-1, input.gety()-1, 3, 3, ofcolor::green );
+		 */
 		drawGui();
-
+		
 		PROFILE_SECTION_POP();
 #endif
+
 	}
+
 }
+
+void Wind::sendTiny()
+{
+
+	PROFILE_THIS_BLOCK("to pd");
+
+	float activity = 0.0f;
+	//message = "";
+#ifdef NEW_TINY
+	unsigned char* pixels = tiny;
+#else
+	PROFILE_SECTION_PUSH("tiny to pixels");
+	unsigned char* pixels = grayDiffTiny.getPixels();
+	PROFILE_SECTION_POP();
+#endif
+
+	// stride will affect the way the pixels are distributed to oscillators
+	int total_pixels=tiny_width*tiny_height;
+
+
+	PROFILE_SECTION_PUSH("pixelrow");
+	for ( int i=0; i< tiny_height; i++ )
+	{
+		// one row at a time
+		//				message += "/pixelrow ";
+		PROFILE_SECTION_PUSH("message setup");
+		pd->startMessage( "pixels", "/pixelrow" );
+		//				pd->addSymbol( "/pixelrow" );
+		// pixelrow messages go /pixelrow <row num> <col val 0> <col val 1> ... <col val TINY_WIDTH-1>
+		// row number
+		pd->addFloat( i );
+		PROFILE_SECTION_POP();
+
+		// pixels
+		// all zeroes?
+		bool all_zeroes = true;
+		int index = offset+i*stride;
+		PROFILE_SECTION_PUSH("compile");
+		for ( int j=0; j<tiny_width; j++, index+=step )
+		{
+			float val = (float)pixels[index%total_pixels]/255.0f;
+			val *= val;
+			activity += val;
+			pd->addFloat( val );
+		}
+		PROFILE_SECTION_POP();
+		{
+			PROFILE_THIS_BLOCK("pd->finish");
+			//					ofLog( OF_LOG_VERBOSE, "pd->finish() should send %s", message.c_str() );
+			pd->finish();
+		}
+	}
+	PROFILE_SECTION_POP();
+
+	// send total activity
+	activity /= tiny_height*tiny_width;
+
+	PROFILE_SECTION_PUSH("/activity");
+	pd->startList( "pixels" );
+	pd->addSymbol( "/activity" );
+	pd->addFloat( activity );
+	pd->finish();
+	PROFILE_SECTION_POP();
+
+
+	// send next bit of osc
+	PROFILE_SECTION_PUSH("/pixelsum");
+	pd->startList( "pixels" );
+	pd->addSymbol( "/pixelsum" );
+	// pixelsum is TINY_WIDTH pairs of numbers (centroid, total)
+	for ( int j=0; j<tiny_width; j++ )
+	{
+		float total = 0.0f;
+		float centroid = 0.0f;
+		// sum the column
+		for ( int i=0; i<tiny_height; i++ )
+		{
+			float val = (float)pixels[i*tiny_height+j]/255.0f;
+			total += val;
+			centroid += i*val;
+		}
+		centroid /= tiny_height;
+		total /= tiny_height;
+
+		pd->addFloat( centroid );
+		pd->addFloat( total );
+	}
+	pd->finish();
+	PROFILE_SECTION_POP();
+}
+
 
 
 bool Wind::buttonPressCallback( GuiButton* b )
@@ -464,6 +458,7 @@ bool Wind::buttonPressCallback( GuiButton* b )
 		((testApp*)ofGetAppPtr())->saveSettings();
 		close_menu = true;
 	}
+#ifdef TARGET_LINUX
 	else if ( tag == "sys_reboot_n" || tag == "sys_shutdown_n" )
 		close_menu = true;
 	else if ( tag == "sys_shutdown_y" )
@@ -475,21 +470,25 @@ bool Wind::buttonPressCallback( GuiButton* b )
 		system("sudo cyclewlan0" );
 		close_menu = true;
 	}
+#endif
 	
 	return close_menu;
 }
 
 
-void Wind::exit()
+Wind::~Wind()
 {
+#ifdef SCREEN
 	screen.clear( ofColor::green );
+#endif
 	pd->sendSymbol( "pixels", "/abort" );
 	
 	free( tiny );
+	tiny = NULL;
 	ofxPd* temp_pd = pd;
 	pd = NULL;
 	delete temp_pd;
-	printf("ready\n");
+	printf("~wind finished\n");
 }	
 
 
@@ -508,7 +507,9 @@ void Wind::saveSettings( ofxXmlSettings& data )
 	data.addValue( "port", port );
 	data.popTag();
 	
+#ifdef SCREEN
 	input.saveCalibration( data );
+#endif
 	
 }
 
@@ -559,12 +560,12 @@ void Wind::drawGui()
 		
 		
 		ofFill();
-		for ( int i=0; i<TINY_HEIGHT; i++ )
+		for ( int i=0; i<tiny_height; i++ )
 		{
-			for ( int j=0; j<TINY_WIDTH; j++ )
+			for ( int j=0; j<tiny_width; j++ )
 			{
 				ofColor c;
-				c.set( tiny[i*TINY_WIDTH+j], 255 );
+				c.set( tiny[i*tiny_width+j], 255 );
 #ifndef NO_WINDOW
 				ofSetColor( c );
 				ofRect( 180+j*4, i*4, 4, 4 );
@@ -693,8 +694,8 @@ void Wind::audioRequested(float * output, int bufferSize, int nChannels) {
 void Wind::calculateTiny( ofxCvGrayscaleImage& img )
 {
 	
-	int img_cell_height = img.height/(TINY_HEIGHT+2);
-	int img_cell_width = img.width/(TINY_WIDTH+2);
+	int img_cell_height = img.height/(tiny_height+2);
+	int img_cell_width = img.width/(tiny_width+2);
 	
 	int img_row_count = img.height/img_cell_height;
 	int img_col_count = img.width/img_cell_width;
@@ -756,7 +757,7 @@ void Wind::calculateTiny( ofxCvGrayscaleImage& img )
 			if ( i-1 == ty && j-1 == tx )
 				tiny[(i-1)*TINY_WIDTH+(j-1)] = 255;
 			else*/
-				tiny[(i-1)*TINY_WIDTH+(j-1)] = (unsigned char)(average*0.5f+max*0.5f);
+				tiny[(i-1)*tiny_width+(j-1)] = (unsigned char)(average*0.5f+max*0.5f);
 		}
 	}
 }
