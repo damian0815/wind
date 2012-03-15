@@ -1,9 +1,11 @@
 bin/wind
 bin/libs
-bin
+#bin
 obj
+.DS_Store
 build
 project.xcworkspace
+xcshareddata
 xcuserdata
 *.mode?v3
 *.xcuser
