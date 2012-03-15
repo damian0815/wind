@@ -1,4 +1,4 @@
-#N canvas 732 181 615 684 10;
+#N canvas 978 179 615 684 10;
 #X obj 93 74 unpackOSC;
 #X obj 24 42 playback;
 #X obj 92 104 routeOSC /pixelrow;
@@ -41,6 +41,8 @@
 #X obj 10 65 list trim;
 #X obj 329 196 row2 54 2;
 #X obj 419 200 row2 54 1;
+#X obj 197 20 netreceive 9876;
+#X msg 214 53 0.1 0.1 0 0 0 0 0 0;
 #X connect 0 0 2 0;
 #X connect 1 0 38 0;
 #X connect 2 0 3 0;
@@ -98,3 +100,10 @@
 #X connect 40 1 21 1;
 #X connect 41 0 21 0;
 #X connect 41 1 21 1;
+#X connect 42 0 38 0;
+#X connect 43 0 25 0;
+#X connect 43 0 31 0;
+#X connect 43 0 15 0;
+#X connect 43 0 24 0;
+#X connect 43 0 40 0;
+#X connect 43 0 41 0;
