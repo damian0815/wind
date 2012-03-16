@@ -20,6 +20,6 @@
     <which_hsv_channel>3</which_hsv_channel>
     <osc>
         <host></host>
-        <port>1043542836</port>
+        <port>0</port>
     </osc>
 </app>
