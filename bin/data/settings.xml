@@ -1,13 +1,13 @@
 <app>
     <input>
         <use_video>1</use_video>
-        <video_filename>/Volumes/hdd/Users/damian/2.current/wind_doc_video/00208.MTS.edit-med-mp4.mov</video_filename>
+        <video_filename>/Volumes/hdd/Users/damian/2.current/wind_doc_video/00207.MTS.edit-med-mp4.mov</video_filename>
         <capture_device>1</capture_device>
         <capture_width>640</capture_width>
         <capture_height>480</capture_height>
         <recorded_tiny>
-            <record>0</record>
-            <use>1</use>
+            <record>1</record>
+            <use>0</use>
             <filename>tiny-2012-03-16-16-46-35-833.dat</filename>
             <loop>1</loop>
         </recorded_tiny>

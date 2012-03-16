@@ -131,8 +131,8 @@
 #X connect 51 0 33 0;
 #X connect 52 0 8 0;
 #X connect 52 0 31 0;
-#X connect 52 0 18 0;
 #X connect 52 0 51 0;
+#X connect 52 0 28 0;
 #X connect 53 0 52 0;
 #X connect 54 0 50 0;
 #X connect 54 0 30 0;
