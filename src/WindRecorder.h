@@ -12,6 +12,7 @@
 class WindRecorder
 {
 public:
+	WindRecorder() { file = NULL; }
 	~WindRecorder();
 	
 	bool setup( string path, int tiny_width, int tiny_height );
@@ -28,17 +29,23 @@ private:
 class WindPlayer
 {
 public:
+	WindPlayer() { file = NULL; }
 	~WindPlayer();
 	
-	bool setup( string path );
+	bool setup( string path, bool loop = true );
 	
-	int gitTinyWidth() { return tiny_width; }
+	int getTinyWidth() { return tiny_width; }
 	int getTinyHeight() { return tiny_height; }
 	
+	bool peekNextTinyTimestamp( float& timestamp );
 	bool getNextTiny( unsigned char* tiny, float &timestamp );
+	
 private:
 	
 	FILE* file;
 	int tiny_width;
 	int tiny_height;
+	bool loop;
+	float last_timestamp;
+	float loop_timestamp;
 };

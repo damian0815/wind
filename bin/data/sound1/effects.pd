@@ -1,4 +1,4 @@
-#N canvas 242 140 1110 750 10;
+#N canvas 442 144 1110 750 10;
 #X obj 207 126 vsl 15 128 200 18000 1 0 empty empty empty 0 -9 0 10
 -262144 -1 -1 5165 1;
 #X obj 247 126 vsl 15 128 -50 50 0 0 empty empty empty 0 -9 0 10 -262144
@@ -29,7 +29,7 @@
 #X msg 510 289 \$1 20;
 #X obj 485 299 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
 -1 -1;
-#X obj 283 586 hip~ 5;
+#X obj 391 591 hip~ 5;
 #X obj 70 596 hip~ 5;
 #X obj 510 336 d-biquadcalc-lowpass 2564 140;
 #X obj 405 264 loadbang;
@@ -38,7 +38,7 @@
 #X text 284 105 q*100;
 #X text 590 105 q*100;
 #X obj 80 664 outlet~;
-#X obj 290 654 outlet~;
+#X obj 398 659 outlet~;
 #X obj 35 51 inlet~;
 #X obj 93 51 inlet~;
 #X obj 197 345 d-biquadcalc-equalizer 825 -50 79;
@@ -51,7 +51,8 @@
 #X obj 40 416 biquad~;
 #X obj 100 384 biquad~;
 #X obj 100 416 biquad~;
-#X obj 46 443 d-reverb2-light~ 84.1 90 4635 10 2633 10;
+#X obj 46 444 d-reverb2~ 42.029 98.2944 4476.94 64.4203 246.617 61.5306
+;
 #X connect 0 0 6 0;
 #X connect 0 0 18 0;
 #X connect 1 0 3 0;

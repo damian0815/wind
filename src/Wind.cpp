@@ -37,8 +37,11 @@ void Wind::setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height )
 	tiny_height = _tiny_height;
 	
 	tiny = (unsigned char*)malloc( tiny_width*tiny_height );
+	grayDiffTiny.allocate( tiny_width, tiny_height );
+	grayDiffTiny.getTextureReference().setTextureMinMagFilter( GL_NEAREST, GL_NEAREST );
 	
 	draw_debug = false;
+	record_tiny = false;
 	
 	
 	pd = new ofxPd();
@@ -143,7 +146,26 @@ void Wind::setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height )
 	
 }
 
-bool Wind::updateTiny( unsigned char* pixels, int width, int height )
+void Wind::startRecordTiny( string filename )
+{
+	recorder.setup( filename, tiny_width, tiny_height );
+	record_tiny = true;
+}
+
+void Wind::updateTiny( unsigned char* pixels )
+{
+	memcpy( tiny, pixels, tiny_width*tiny_height );
+	if ( draw_debug )
+	{
+		//	PROFILE_SECTION_PUSH("set tiny from pix");
+		grayDiffTiny.setFromPixels( tiny, tiny_width, tiny_height );
+		//	PROFILE_SECTION_POP();
+	}
+
+}
+
+
+bool Wind::update( unsigned char* pixels, int width, int height, float timestamp )
 {
 #ifdef SCREEN
 	if ( input.isCalibrating() )
@@ -172,7 +194,6 @@ bool Wind::updateTiny( unsigned char* pixels, int width, int height )
 			grayBg.allocate(width, height);
 			grayDiff.allocate(width, height);
 			grayDiffSmall.allocate( width/4,height/4);
-			grayDiffTiny.allocate( tiny_width, tiny_height );
 
 			hue.allocate( width, height );
 			saturation.allocate( width, height );
@@ -243,9 +264,18 @@ bool Wind::updateTiny( unsigned char* pixels, int width, int height )
 		PROFILE_SECTION_PUSH("tiny");
 #ifdef NEW_TINY
 		calculateTiny( grayDiffSmall );
-		//	PROFILE_SECTION_PUSH("set tiny from pix");
-		//	grayDiffTiny.setFromPixels( tiny, TINY_WIDTH, TINY_HEIGHT );
-		//	PROFILE_SECTION_POP();
+		if ( record_tiny )
+		{
+			recorder.addTiny( timestamp, tiny );
+		}
+#ifndef NO_WINDOW
+		if ( draw_debug )
+		{
+			//	PROFILE_SECTION_PUSH("set tiny from pix");
+			grayDiffTiny.setFromPixels( tiny, tiny_width, tiny_height );
+			//	PROFILE_SECTION_POP();
+		}
+#endif
 #else
 		grayDiffSmall.blur(5);
 		//grayDiffSmall.contrast( contrast_2,0);
@@ -277,7 +307,10 @@ bool Wind::updateTiny( unsigned char* pixels, int width, int height )
 		PROFILE_SECTION_POP();
 #endif
 
+		
 	}
+	
+	
 
 }
 
@@ -582,33 +615,46 @@ void Wind::drawGui()
 
 void Wind::draw()
 {
-#ifndef NO_WINDOW
+#ifdef NO_WINDOW
 	drawGui();
-#endif
+#else
 
-	if ( draw_debug && colorImg.getWidth() != 0 )
+	if ( !draw_debug )
 	{
-		// draw the incoming, the grayscale, the bg and the thresholded difference
-		float draw_width = colorImg.getWidth()/2;
-		float draw_height = colorImg.getHeight()/2;
-		ofSetHexColor(0xffffff);
-		colorImg.draw(20,20,draw_width, draw_height );
-		grayImageContrasted.draw(draw_width+40,20,draw_width,draw_height);
+		drawGui();
+	}
+	else if ( draw_debug )
+	{
+		if ( colorImg.getWidth() != 0 )
+		{
+			// draw the incoming, the grayscale, the bg and the thresholded difference
+			float draw_width = colorImg.getWidth()/2;
+			float draw_height = colorImg.getHeight()/2;
+			ofSetHexColor(0xffffff);
+			colorImg.draw(20,20,draw_width, draw_height );
+			grayImageContrasted.draw(draw_width+40,20,draw_width,draw_height);
 
-		//		saturation.draw(20,draw_height+40,draw_width,draw_height);
-		//		value.draw(draw_width+40,draw_height+40,draw_width,draw_height);
-		//		grayDiff.draw( 2*draw_width+80, 20, draw_width, draw_height );
-		//		grayDiffTiny.draw( 2*draw_width+80, draw_height+40, draw_width, draw_height );
+			//		saturation.draw(20,draw_height+40,draw_width,draw_height);
+			//		value.draw(draw_width+40,draw_height+40,draw_width,draw_height);
+			//		grayDiff.draw( 2*draw_width+80, 20, draw_width, draw_height );
+			//		grayDiffTiny.draw( 2*draw_width+80, draw_height+40, draw_width, draw_height );
 
-		grayDiff.draw( 20, draw_height+40, draw_width, draw_height );
-		grayDiffTiny.draw(draw_width+40, draw_height+40, draw_width, grayDiffTiny.height*((float)draw_width/grayDiffTiny.width) );
+			grayDiff.draw( 20, draw_height+40, draw_width, draw_height );
+			grayDiffTiny.draw(draw_width+40, draw_height+40, draw_width, grayDiffTiny.height*((float)draw_width/grayDiffTiny.width) );
+		}
+		else
+		{
+			float draw_width = (ofGetWidth()-80);
+			grayDiffTiny.draw(40, 40, draw_width, grayDiffTiny.height*(draw_width/grayDiffTiny.width) );
+		}
 		// finally, a report:
 
 		ofSetHexColor(0xffffff);
 		char reportStr[1024]; 
-		sprintf(reportStr, "contrast values: %0.2f (c/C)  %0.2f (r/R)  stride: %3i offs: %3i step: %5.2f", contrast_1, contrast_2, stride, offset, step );
-		ofDrawBitmapString(reportStr, 20, ofGetHeight()-20);
+		sprintf(reportStr, "contrast values: %0.2f (c/C)  %0.2f (r/R)  stride: %3i (s/S) offs: %3i (o/O) step: %5.2f (t/T)", contrast_1, contrast_2, stride, offset, step );
+		ofDrawBitmapStringHighlight(reportStr, 20, ofGetHeight()-34);
 	}
+#endif
 }
 
 void Wind::keyPressed( int key )

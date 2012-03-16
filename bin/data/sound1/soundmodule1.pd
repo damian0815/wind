@@ -1,5 +1,5 @@
 #N canvas 1295 566 492 456 10;
-#X obj 31 206 osc~;
+#X obj 18 215 osc~;
 #X obj 57 289 *~;
 #X obj 33 149 mtof;
 #X obj 13 16 inlet;
@@ -31,6 +31,8 @@
 #X obj 201 304 sel 1;
 #X obj 202 256 > 0.98;
 #X obj 158 395 print note\$1;
+#X obj 55 207 phasor~;
+#X obj 56 241 *~ 0.05;
 #X connect 0 0 1 0;
 #X connect 1 0 7 0;
 #X connect 2 0 5 0;
@@ -38,6 +40,7 @@
 #X connect 4 0 21 0;
 #X connect 5 0 0 0;
 #X connect 5 0 27 1;
+#X connect 5 0 32 0;
 #X connect 6 0 23 0;
 #X connect 8 0 9 0;
 #X connect 9 0 10 1;
@@ -65,3 +68,5 @@
 #X connect 28 0 29 0;
 #X connect 29 0 27 0;
 #X connect 30 0 28 0;
+#X connect 32 0 33 0;
+#X connect 33 0 1 0;

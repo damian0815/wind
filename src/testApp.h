@@ -30,6 +30,8 @@
 
 #include "FProfiler/FProfiler.h"
 
+#include "WindRecorder.h"
+
 
 class testApp : public ofBaseApp {
 
@@ -57,6 +59,10 @@ private:
 	ofVideoGrabber 		vidGrabber;
 	ofVideoPlayer		vidPlayer;
 	bool use_video;
+	
+	WindPlayer tiny_player;
+	bool use_recorded_tiny;
+	unsigned char* recorded_tiny;
 	
 	string video_filename;
 	int capture_device, capture_width, capture_height;

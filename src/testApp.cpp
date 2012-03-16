@@ -50,10 +50,43 @@ void testApp::setup(){
 	capture_device = data.getValue("input:capture_device", DEFAULT_CAPTURE_DEVICE );
 	capture_width = data.getValue("input:capture_width", DEFAULT_CAPTURE_WIDTH );
 	capture_height = data.getValue("input:capture_height", DEFAULT_CAPTURE_HEIGHT );
-	
+
 	wind.setup( data, TINY_WIDTH_DEFAULT, TINY_HEIGHT_DEFAULT );
 
-	if ( !use_video )
+	use_recorded_tiny = data.getValue("input:recorded_tiny:use", 0 );
+	string recorded_tiny_filename = data.getValue("input:recorded_tiny:filename", "" );
+	recorded_tiny = NULL;
+	if ( use_recorded_tiny )
+	{
+		bool loop = false;
+		if ( data.getValue("input:recorded_tiny:loop", 0 ) )
+		{
+			loop = true;
+		}
+		tiny_player.setup( recorded_tiny_filename, loop );
+		if ( wind.getTinyWidth() != tiny_player.getTinyWidth() || wind.getTinyHeight() != tiny_player.getTinyHeight() )
+			ofLog( OF_LOG_ERROR, "recorded tiny %s: tiny size mismatch", recorded_tiny_filename.c_str() );
+		else
+		{
+			ofLog( OF_LOG_NOTICE, "recorded tiny %s loaded", recorded_tiny_filename.c_str() );
+			recorded_tiny = (unsigned char*)malloc( tiny_player.getTinyWidth()*tiny_player.getTinyHeight() );
+		}
+		
+	}
+	else if ( use_video )
+	{
+		// load the movie
+		if ( !vidPlayer.loadMovie(video_filename) )
+		{
+			fprintf( stderr, "error loading %s\n", video_filename.c_str() );
+			::exit(1);
+		}
+		printf("movie %s loaded: size %.0f %.0f\n", video_filename.c_str(), vidPlayer.getWidth(), vidPlayer.getHeight() );
+		vidPlayer.setVolume( 0 );
+		vidPlayer.play();
+		//vidPlayer.setSpeed(0);
+	}		
+	else
 	{
 		vidGrabber.setVerbose(true);
 		ofLog(OF_LOG_VERBOSE, "opening capture device %i", capture_device );
@@ -73,19 +106,6 @@ void testApp::setup(){
 		if ( int(vidGrabber.getWidth()) != capture_width || int(vidGrabber.getHeight()) != capture_height )
 			ofLog( OF_LOG_WARNING, "WARNING: not requested capture size %ix%i", capture_width, capture_height );
 	}
-	else
-	{
-		// load the movie
-		if ( !vidPlayer.loadMovie(video_filename) )
-		{
-			fprintf( stderr, "error loading %s\n", video_filename.c_str() );
-			::exit(1);
-		}
-		printf("movie %s loaded: size %.0f %.0f\n", video_filename.c_str(), vidPlayer.getWidth(), vidPlayer.getHeight() );
-		vidPlayer.setVolume( 0 );
-		vidPlayer.play();
-		//vidPlayer.setSpeed(0);
-	}		
 
 
 
@@ -117,52 +137,83 @@ void testApp::update(){
 	PROFILE_SECTION_POP();
 
 	PROFILE_SECTION_PUSH("testApp::update()");
-	
-	if ( use_video )
-		vidPlayer.idleMovie();
-	else
+
+	if ( use_recorded_tiny )
 	{
-		PROFILE_THIS_BLOCK("grabber update");
-		vidGrabber.update();
+		float timestamp;
+		while(true)
+		{
+			bool read = tiny_player.peekNextTinyTimestamp(timestamp);
+			if ( !read )
+			{
+				ofLog(OF_LOG_ERROR, "problem reading tiny recording");
+				break;
+			}
+			// wait until the right time
+			ofLog( OF_LOG_NOTICE, "read timestamp %f, elapsed %f", timestamp, ofGetElapsedTimef());
+			if ( timestamp > ofGetElapsedTimef() )
+			{
+				break;
+			}
+
+			float dummy;
+			tiny_player.getNextTiny( recorded_tiny, dummy ); 
+			wind.updateTiny( recorded_tiny );
+			wind.sendTiny();
+		}
 	}
-	
-	bool frame = false;
-	if ( use_video )
-		frame = vidPlayer.isFrameNew();
 	else
-		frame = vidGrabber.isFrameNew();
-	
-	if ( frame )
 	{
-		PROFILE_THIS_BLOCK("have frame");
 		
-		PROFILE_SECTION_PUSH("get frame");
-		unsigned char* pixels;
-		int w,h;
+		bool frame = false;
+		float timestamp;
 		if ( use_video )
 		{
-			pixels = vidPlayer.getPixels();
-			w = vidPlayer.getWidth();
-			h = vidPlayer.getHeight();
+			vidPlayer.setFrame(ofGetFrameNum());
+			vidPlayer.idleMovie();
+			frame = vidPlayer.isFrameNew();
+			timestamp = vidPlayer.getPosition() * vidPlayer.getDuration();
 		}
 		else
 		{
-			pixels = vidGrabber.getPixels();
-			w = vidGrabber.getWidth();
-			h = vidGrabber.getHeight();
+			PROFILE_THIS_BLOCK("grabber update");
+			vidGrabber.update();
+			frame = vidGrabber.isFrameNew();
+			timestamp = ofGetElapsedTimef();
 		}
-		PROFILE_SECTION_POP();
-
-		wind.updateTiny( pixels, w, h );
 		
-		wind.sendTiny();
-	}
-	else
-	{
-		usleep(20*1000);
-	}
+		if ( frame )
+		{
+			PROFILE_THIS_BLOCK("have frame");
+			
+			PROFILE_SECTION_PUSH("get frame");
+			unsigned char* pixels;
+			int w,h;
+			if ( use_video )
+			{
+				pixels = vidPlayer.getPixels();
+				w = vidPlayer.getWidth();
+				h = vidPlayer.getHeight();
+			}
+			else
+			{
+				pixels = vidGrabber.getPixels();
+				w = vidGrabber.getWidth();
+				h = vidGrabber.getHeight();
+			}
+			PROFILE_SECTION_POP();
+			
+			wind.update( pixels, w, h, timestamp );
+			
+			wind.sendTiny();
+
+		}
+		else
+		{
+			usleep(20*1000);
+		}
 	
-	
+	}	
 
 	PROFILE_SECTION_POP();
 
@@ -174,6 +225,14 @@ void testApp::update(){
 void testApp::draw(){
 
 	wind.draw();
+	
+	if ( use_video )
+	{
+		char msg[255];
+		sprintf( msg, "movie: frame %4i / time %8.2f", vidPlayer.getCurrentFrame(), vidPlayer.getPosition()*vidPlayer.getDuration() );
+		ofDrawBitmapStringHighlight( msg, 20, ofGetHeight()-68 );
+	//	ofDrawBitmapString( msg, 20, ofGetHeight()-34 );
+	}	
 }
 
 
@@ -205,6 +264,17 @@ void testApp::keyPressed  (int key){
 	{
 		case 'v':
 			vidGrabber.videoSettings();
+			break;
+		case 'x':
+			saveSettings();
+			ofLog(OF_LOG_NOTICE, "settings saved");
+			break;
+		case 'w':
+			if ( !use_recorded_tiny )
+			{
+				wind.startRecordTiny( "tiny-"+ofGetTimestampString()+".dat" );
+				ofLog(OF_LOG_NOTICE, "tiny recording started" );
+			}
 			break;
 		default:			
 			wind.keyPressed( key );
