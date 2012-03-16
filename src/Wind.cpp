@@ -32,6 +32,7 @@ static const int DEFAULT_HSV_CHANNEL = 3;
 
 void Wind::setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height )
 {
+	bool do_new_tiny = false;
 	
 	tiny_width = _tiny_width;
 	tiny_height = _tiny_height;
@@ -42,6 +43,7 @@ void Wind::setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height )
 	
 	draw_debug = false;
 	record_tiny = false;
+	tiny_record_start_time = 0;
 	
 	
 	pd = new ofxPd();
@@ -89,11 +91,10 @@ void Wind::setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height )
 	gui.addButton( "calc", "Cont 1", "calc_cont1" );
 	gui.addButton( "calc_cont1", "+", "calc_cont1_+" );
 	gui.addButton( "calc_cont1", "-", "calc_cont1_-" );
-#ifndef NEW_TINY
 	gui.addButton( "calc", "Cont 2", "calc_cont2" );
 	gui.addButton( "calc_cont2", "+", "calc_cont2_+" );
 	gui.addButton( "calc_cont2", "-", "calc_cont2_-" );
-#endif
+
 	gui.addButton( "calc", "Offset", "calc_offset" );
 	gui.addButton( "calc_offset", "+", "calc_offset_+" );
 	gui.addButton( "calc_offset", "-", "calc_offset_-" );
@@ -155,13 +156,22 @@ void Wind::startRecordTiny( string filename )
 void Wind::updateTiny( unsigned char* pixels )
 {
 	memcpy( tiny, pixels, tiny_width*tiny_height );
-	if ( draw_debug )
-	{
+	if ( !do_new_tiny || draw_debug )
+	{ 
 		//	PROFILE_SECTION_PUSH("set tiny from pix");
 		grayDiffTiny.setFromPixels( tiny, tiny_width, tiny_height );
 		//	PROFILE_SECTION_POP();
 	}
 
+}
+
+void Wind::setColorImage( unsigned char* pixels, int width, int height )
+{
+	if ( colorImg.getWidth() == 0 )
+	{
+		colorImg.allocate(width, height);
+	}
+	colorImg.setFromPixels( pixels, width, height );
 }
 
 
@@ -188,6 +198,9 @@ bool Wind::update( unsigned char* pixels, int width, int height, float timestamp
 		if ( colorImg.getWidth() == 0 )
 		{
 			colorImg.allocate(width, height);
+		}
+		if ( grayImage.getWidth() == 0 )
+		{
 			grayImage.allocate(width, height);
 			pastImg.allocate( width, height );
 			grayImageContrasted.allocate(width, height);
@@ -201,8 +214,8 @@ bool Wind::update( unsigned char* pixels, int width, int height, float timestamp
 			hsvImg.allocate( width, height );
 		}
 
-		colorImg.setFromPixels( pixels, width, height );
-
+		setColorImage( pixels, width, height );
+		
 		// to hsv
 		PROFILE_SECTION_PUSH("to HSV/grey");
 		if ( which_hsv_channel == 3 )
@@ -262,28 +275,42 @@ bool Wind::update( unsigned char* pixels, int width, int height, float timestamp
 		//		grayDiffSmall.blurHeavily();
 
 		PROFILE_SECTION_PUSH("tiny");
-#ifdef NEW_TINY
-		calculateTiny( grayDiffSmall );
-		if ( record_tiny )
-		{
-			recorder.addTiny( timestamp, tiny );
-		}
-#ifndef NO_WINDOW
-		if ( draw_debug )
-		{
-			//	PROFILE_SECTION_PUSH("set tiny from pix");
-			grayDiffTiny.setFromPixels( tiny, tiny_width, tiny_height );
-			//	PROFILE_SECTION_POP();
-		}
-#endif
-#else
+		
 		grayDiffSmall.blur(5);
 		//grayDiffSmall.contrast( contrast_2,0);
 		cvConvertScale( grayDiffSmall.getCvImage(), grayDiffSmall.getCvImage(), contrast_2, 0 );
 		grayDiffSmall.flagImageChanged();
-
-		cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
-#endif
+		
+		if ( do_new_tiny )
+		{
+			
+			calculateTiny( grayDiffSmall );
+			if ( record_tiny )
+			{
+				recorder.addTiny( timestamp, tiny );
+			}
+			#ifndef NO_WINDOW
+			if ( draw_debug )
+			{
+				//	PROFILE_SECTION_PUSH("set tiny from pix");
+				grayDiffTiny.setFromPixels( tiny, tiny_width, tiny_height );
+				//	PROFILE_SECTION_POP();
+			}
+			#endif
+		}
+		else
+		{
+			cvResize( grayDiffSmall.getCvImage(), grayDiffTiny.getCvImage() );
+			grayDiffTiny.flagImageChanged();
+			for ( int i=0; i<tiny_height; i++ )
+			{
+				for ( int j=0; j<tiny_width; j++ )
+				{
+					int index = i*tiny_width+j;
+					tiny[index] = grayDiffTiny.getPixels()[index];
+				}
+			}
+		}
 		PROFILE_SECTION_POP();
 
 		
@@ -321,13 +348,15 @@ void Wind::sendTiny()
 
 	float activity = 0.0f;
 	//message = "";
-#ifdef NEW_TINY
-	unsigned char* pixels = tiny;
-#else
-	PROFILE_SECTION_PUSH("tiny to pixels");
-	unsigned char* pixels = grayDiffTiny.getPixels();
-	PROFILE_SECTION_POP();
-#endif
+	unsigned char* pixels;
+	if ( do_new_tiny )
+		pixels = tiny;
+	else
+	{
+		PROFILE_SECTION_PUSH("tiny to pixels");
+		pixels = grayDiffTiny.getPixels();
+		PROFILE_SECTION_POP();
+	}
 
 	// stride will affect the way the pixels are distributed to oscillators
 	int total_pixels=tiny_width*tiny_height;
@@ -457,12 +486,10 @@ bool Wind::buttonPressCallback( GuiButton* b )
 	else if ( tag == "calc_cont1_-" )
 		setContrast1( contrast_1 / 1.05f );
 	
-#ifndef NEW_TINY
 	else if ( tag == "calc_cont2_+" )
 		setContrast2( contrast_2 * 1.05f );
 	else if ( tag == "calc_cont2_-" )
 		setContrast2( contrast_2 / 1.05f );
-#endif
 	
 	else if ( tag == "calc_stride_+" )
 		setStride( stride+1 );
@@ -625,11 +652,12 @@ void Wind::draw()
 	}
 	else if ( draw_debug )
 	{
-		if ( colorImg.getWidth() != 0 )
+		if ( grayImage.getWidth() != 0 )
 		{
 			// draw the incoming, the grayscale, the bg and the thresholded difference
 			float draw_width = colorImg.getWidth()/2;
 			float draw_height = colorImg.getHeight()/2;
+			float aspect = draw_width/draw_height;
 			ofSetHexColor(0xffffff);
 			colorImg.draw(20,20,draw_width, draw_height );
 			grayImageContrasted.draw(draw_width+40,20,draw_width,draw_height);
@@ -639,13 +667,19 @@ void Wind::draw()
 			//		grayDiff.draw( 2*draw_width+80, 20, draw_width, draw_height );
 			//		grayDiffTiny.draw( 2*draw_width+80, draw_height+40, draw_width, draw_height );
 
-			grayDiff.draw( 20, draw_height+40, draw_width, draw_height );
-			grayDiffTiny.draw(draw_width+40, draw_height+40, draw_width, grayDiffTiny.height*((float)draw_width/grayDiffTiny.width) );
+			grayDiffSmall.draw( 20, draw_height+40, draw_width, draw_height );
+			grayDiffTiny.draw(draw_width+40, draw_height+40, draw_width, draw_height );
 		}
 		else
 		{
-			float draw_width = (ofGetWidth()-80);
-			grayDiffTiny.draw(40, 40, draw_width, grayDiffTiny.height*(draw_width/grayDiffTiny.width) );
+			float aspect = grayDiffTiny.getWidth()/grayDiffTiny.getHeight();
+			float draw_width = (ofGetWidth()-120) / 2;
+			if ( colorImg.getWidth() != 0 )
+			{
+				aspect = colorImg.getWidth()/colorImg.getHeight();
+				colorImg.draw( 40, 40, draw_width, draw_width/aspect );
+			}
+			grayDiffTiny.draw(40+draw_width+40, 40, draw_width, draw_width/aspect );
 		}
 		// finally, a report:
 
@@ -803,7 +837,7 @@ void Wind::calculateTiny( ofxCvGrayscaleImage& img )
 			if ( i-1 == ty && j-1 == tx )
 				tiny[(i-1)*TINY_WIDTH+(j-1)] = 255;
 			else*/
-				tiny[(i-1)*tiny_width+(j-1)] = (unsigned char)(average*0.5f+max*0.5f);
+				tiny[(i-1)*tiny_width+(j-1)] = (unsigned char)(min(int(average*0.5f+max*0.5f),255));
 		}
 	}
 }

@@ -39,7 +39,7 @@ int main( ){
 #else
 	ofAppGlutWindow window;
 #endif
-	ofSetupOpenGL(&window, 700, 560, OF_WINDOW);			// <-------- setup the GL context
+	ofSetupOpenGL(&window, 1600, 1200, OF_WINDOW);			// <-------- setup the GL context
 
 	// this is my "app" :
 	// this kicks off the running of my app

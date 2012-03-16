@@ -23,6 +23,7 @@ private:
 	
 	FILE* file;
 	int tiny_width, tiny_height;
+
 	
 };
 

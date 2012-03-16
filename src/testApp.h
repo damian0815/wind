@@ -63,6 +63,9 @@ private:
 	WindPlayer tiny_player;
 	bool use_recorded_tiny;
 	unsigned char* recorded_tiny;
+	string recorded_tiny_filename;
+	bool tiny_loop;
+	bool record_tiny;
 	
 	string video_filename;
 	int capture_device, capture_width, capture_height;

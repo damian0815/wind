@@ -31,11 +31,14 @@ public:
 	~Wind();
 	/// pixels is RGB width x height
 	void setup( ofxXmlSettings& data, int _tiny_width, int _tiny_height );
-	void startRecordTiny( string filename );
+	void startRecordTiny( string filename = "tiny-"+ofGetTimestampString()+".dat" );
+	bool isRecordingTiny() { return record_tiny; }
 
 	bool update( unsigned char* pixels, int width, int height, float timestamp );
 	void updateTiny( unsigned char* tiny_pixels );
 	void setTiny( unsigned char* _tiny );
+	void setColorImage( unsigned char* pixels, int width, int height );
+	
 	int getTinyWidth() { return tiny_width; }
 	int getTinyHeight() { return tiny_height; }
 	
@@ -109,6 +112,9 @@ private:
 	int tiny_width, tiny_height;
 	bool record_tiny;
 	WindRecorder recorder;
+	float tiny_record_start_time;
+
+	bool do_new_tiny;
 	
 #ifdef SCREEN
 	WatterottScreen screen;

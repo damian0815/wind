@@ -36,6 +36,7 @@
 		26d02ddbcc480c165f67aa09e0c6f707 /* routeOSC-help.pd in Sources */ = {isa = PBXBuildFile; fileRef = 298ec308d69433d245b38c6a11d104e6 /* routeOSC-help.pd */; };
 		289612d72e9b559c9b0c4f7d40850c66 /* x_time.c in Sources */ = {isa = PBXBuildFile; fileRef = 1d7f49ed7db57d041a3b72789db30ea7 /* x_time.c */; };
 		28d113b94b2437937ec1a8885bb9803c /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93fa7d544754488b1c9440d921b2aa7d /* tinyxmlparser.cpp */; };
+		2DECF3A715137CF500F63234 /* ThreadedMovie.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DECF3A615137CF500F63234 /* ThreadedMovie.cpp */; };
 		2abd323c4b9e2eebd789a07f95c965c9 /* vexp_fun.c in Sources */ = {isa = PBXBuildFile; fileRef = 07d3df106a0851be776102ae494b2e73 /* vexp_fun.c */; };
 		2de918fb33ed3496ee774ce3d2be6eb3 /* packOSCstream-help.pd in Sources */ = {isa = PBXBuildFile; fileRef = 4a11c7efcc270832d4446147fe13e558 /* packOSCstream-help.pd */; };
 		2ebd468b28b917678ed7d7d177b20496 /* x_gui.c in Sources */ = {isa = PBXBuildFile; fileRef = d40a804282b23348f7333e5dce6d698d /* x_gui.c */; };
@@ -137,7 +138,6 @@
 		adde141ff04caaa151f56da5d4697e58 /* ofxCvHaarFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2d40e1d54b8d6f625fb1ee9fccf8fc67 /* ofxCvHaarFinder.cpp */; };
 		afbf6134a07d0a196972474acb1b03de /* unpackOSC.c in Sources */ = {isa = PBXBuildFile; fileRef = bfa11d3021b1f7f25dd9055002d34488 /* unpackOSC.c */; };
 		b18615504db9c280243768ea7c9d15ce /* g_all_guis.c in Sources */ = {isa = PBXBuildFile; fileRef = 39735535c0d17f8689d8aaa55417be02 /* g_all_guis.c */; };
-		b22ba05cca5500604a81f10d3d5085a9 /* watterott_test_input.cpp.txt in Sources */ = {isa = PBXBuildFile; fileRef = 3a8b8cce4007ab979037a03c120cd0da /* watterott_test_input.cpp.txt */; };
 		b355ad4472a90082ec58517a001f17de /* s_loader.c in Sources */ = {isa = PBXBuildFile; fileRef = 3a7de5329aa65a2ac2dcef0210ee3ebb /* s_loader.c */; };
 		b37c3ccfe6f6d39deb967687dec689f6 /* m_atom.c in Sources */ = {isa = PBXBuildFile; fileRef = 2ab4b9bdb860e86326c69a01e364496e /* m_atom.c */; };
 		b44de10c5b78629ce427284edfe59bd9 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1cbd1759a2e29935b8856714e9734210 /* ofxCvColorImage.cpp */; };
@@ -271,6 +271,9 @@
 		293d5c66797c238b04e890800b910b2d /* s_path.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 30; name = s_path.c; path = "../../..//addons/ofxPd/src/pd/pure-data/src/s_path.c"; sourceTree = SOURCE_ROOT; };
 		2984d040211bf1f837570e324dc7241d /* objdetect.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = objdetect.hpp; path = "../../..//addons/ofxOpenCv/libs/opencv/include/opencv2/objdetect/objdetect.hpp"; sourceTree = SOURCE_ROOT; };
 		298ec308d69433d245b38c6a11d104e6 /* routeOSC-help.pd */ = {isa = PBXFileReference; explicitFileType = file; fileEncoding = 30; name = "routeOSC-help.pd"; path = "../../..//addons/ofxPd/src/pd/mrpeach/osc/routeOSC-help.pd"; sourceTree = SOURCE_ROOT; };
+		2D4013A8151361590013C60C /* settings.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = settings.xml; path = bin/data/settings.xml; sourceTree = "<group>"; };
+		2DECF3A615137CF500F63234 /* ThreadedMovie.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadedMovie.cpp; sourceTree = "<group>"; };
+		2DECF3A815137CFC00F63234 /* ThreadedMovie.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadedMovie.h; sourceTree = "<group>"; };
 		2a1b95d7215bbf21ce51b33c60d597de /* version.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = version.hpp; path = "../../..//addons/ofxOpenCv/libs/opencv/include/opencv2/core/version.hpp"; sourceTree = SOURCE_ROOT; };
 		2ab4b9bdb860e86326c69a01e364496e /* m_atom.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 30; name = m_atom.c; path = "../../..//addons/ofxPd/src/pd/pure-data/src/m_atom.c"; sourceTree = SOURCE_ROOT; };
 		2d40e1d54b8d6f625fb1ee9fccf8fc67 /* ofxCvHaarFinder.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxCvHaarFinder.cpp; path = "../../..//addons/ofxOpenCv/src/ofxCvHaarFinder.cpp"; sourceTree = SOURCE_ROOT; };
@@ -295,7 +298,6 @@
 		3a051d59705e0cec236e30e9a30fba3c /* fts_to_pd.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = fts_to_pd.h; path = "../../..//addons/ofxPd/src/pd/pure-data/extra/expr~/fts_to_pd.h"; sourceTree = SOURCE_ROOT; };
 		3a09caee48b21e597746432a111d8007 /* simplex_downhill.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = simplex_downhill.h; path = "../../..//addons/ofxOpenCv/libs/opencv/include/opencv2/flann/simplex_downhill.h"; sourceTree = SOURCE_ROOT; };
 		3a7de5329aa65a2ac2dcef0210ee3ebb /* s_loader.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 30; name = s_loader.c; path = "../../..//addons/ofxPd/src/pd/pure-data/src/s_loader.c"; sourceTree = SOURCE_ROOT; };
-		3a8b8cce4007ab979037a03c120cd0da /* watterott_test_input.cpp.txt */ = {isa = PBXFileReference; explicitFileType = file; fileEncoding = 30; name = watterott_test_input.cpp.txt; path = src/watterott_test_input.cpp.txt; sourceTree = SOURCE_ROOT; };
 		3ae04a8e24924819822521bcc058a8f9 /* imgproc.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = imgproc.hpp; path = "../../..//addons/ofxOpenCv/libs/opencv/include/opencv2/imgproc/imgproc.hpp"; sourceTree = SOURCE_ROOT; };
 		3cd35bdd9a3d283bbcf51d31ef357d91 /* WatterottScreen.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = WatterottScreen.h; path = src/WatterottScreen.h; sourceTree = SOURCE_ROOT; };
 		3e81a76171caa25be967ab79790eb9d6 /* choice.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 30; name = choice.c; path = "../../..//addons/ofxPd/src/pd/pure-data/extra/choice/choice.c"; sourceTree = SOURCE_ROOT; };
@@ -957,6 +959,7 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				2D4013A8151361590013C60C /* settings.xml */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
 				E4B69E1C0A3A1BDC003C02F2 /* src */,
@@ -973,13 +976,14 @@
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* testApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* testApp.h */,
+				2DECF3A615137CF500F63234 /* ThreadedMovie.cpp */,
+				2DECF3A815137CFC00F63234 /* ThreadedMovie.h */,
 				b304d05da43149641f8dae212e998089 /* Constants.h */,
 				991effa7d3b7f4e296981542d1ca609f /* Font8x12.cpp */,
 				ce6da54d8d33c495bc887bff33733974 /* Font8x12.h */,
 				4afc981869bb76b89424aeaef9809904 /* FProfiler */,
 				0f9686e96127c79506700dd143940e37 /* Gui.cpp */,
 				26392d1501441535e6a35ef1a41ced1a /* Gui.h */,
-				3a8b8cce4007ab979037a03c120cd0da /* watterott_test_input.cpp.txt */,
 				974dfcdb6d7162165549df54d5dbf5ea /* WatterottInput.cpp */,
 				7b50dab003623a1f32e995a0fb492837 /* WatterottInput.h */,
 				9aa3c479e6f48db54705baf424ec80c4 /* WatterottScreen.cpp */,
@@ -1405,7 +1409,6 @@
 				175158ca98b5f2bf21d2af828579ab0d /* FTime.cpp in Sources */,
 				55625d49206a68b23d9b5722f9ddaca1 /* ofxMutex.cpp in Sources */,
 				0018b8f5cc8a14de0a0aecdf8fa0a6f1 /* Gui.cpp in Sources */,
-				b22ba05cca5500604a81f10d3d5085a9 /* watterott_test_input.cpp.txt in Sources */,
 				5aef0758d23c1b52563bde9d811c1887 /* WatterottInput.cpp in Sources */,
 				c74ff5d88c41449e1da64b710e2446e7 /* WatterottScreen.cpp in Sources */,
 				87b068033562ac84609710c734e2a496 /* Wind.cpp in Sources */,
@@ -1558,6 +1561,7 @@
 				965fe50d56ba523fa84295b1cce977d7 /* tinyxml.cpp in Sources */,
 				ddf8e3445caad3d0b5783a01065c90ba /* tinyxmlerror.cpp in Sources */,
 				28d113b94b2437937ec1a8885bb9803c /* tinyxmlparser.cpp in Sources */,
+				2DECF3A715137CF500F63234 /* ThreadedMovie.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

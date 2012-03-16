@@ -37,7 +37,7 @@ void testApp::setup(){
 	
 	ofSetBackgroundAuto( false );
 	
-	ofSetFrameRate( 25.0f );
+	//ofSetFrameRate( 60.0f );
 	mouse_x_pct = -1;
 	mouse_y_pct = -1;
 	ofSetLogLevel( OF_LOG_VERBOSE );
@@ -53,17 +53,17 @@ void testApp::setup(){
 
 	wind.setup( data, TINY_WIDTH_DEFAULT, TINY_HEIGHT_DEFAULT );
 
-	use_recorded_tiny = data.getValue("input:recorded_tiny:use", 0 );
-	string recorded_tiny_filename = data.getValue("input:recorded_tiny:filename", "" );
+	record_tiny = data.getValue("input:recorded_tiny:record", 0 );
+	if ( record_tiny )
+		use_recorded_tiny = 0;
+	else
+		use_recorded_tiny = data.getValue("input:recorded_tiny:use", 0 );
+	recorded_tiny_filename = data.getValue("input:recorded_tiny:filename", "" );
 	recorded_tiny = NULL;
+	tiny_loop = data.getValue("input:recorded_tiny:loop", 0 );
 	if ( use_recorded_tiny )
 	{
-		bool loop = false;
-		if ( data.getValue("input:recorded_tiny:loop", 0 ) )
-		{
-			loop = true;
-		}
-		tiny_player.setup( recorded_tiny_filename, loop );
+		tiny_player.setup( recorded_tiny_filename, tiny_loop );
 		if ( wind.getTinyWidth() != tiny_player.getTinyWidth() || wind.getTinyHeight() != tiny_player.getTinyHeight() )
 			ofLog( OF_LOG_ERROR, "recorded tiny %s: tiny size mismatch", recorded_tiny_filename.c_str() );
 		else
@@ -73,7 +73,11 @@ void testApp::setup(){
 		}
 		
 	}
-	else if ( use_video )
+	
+	if ( record_tiny )
+		wind.startRecordTiny( );
+	
+	if ( use_video )
 	{
 		// load the movie
 		if ( !vidPlayer.loadMovie(video_filename) )
@@ -150,8 +154,11 @@ void testApp::update(){
 				break;
 			}
 			// wait until the right time
-			ofLog( OF_LOG_NOTICE, "read timestamp %f, elapsed %f", timestamp, ofGetElapsedTimef());
-			if ( timestamp > ofGetElapsedTimef() )
+			//ofLog( OF_LOG_NOTICE, "read timestamp %f, elapsed %f", timestamp, ofGetElapsedTimef());
+			float target_timestamp = ofGetElapsedTimef();
+			if ( use_video )
+				target_timestamp = vidPlayer.getPosition()*vidPlayer.getDuration();
+			if ( timestamp > target_timestamp )
 			{
 				break;
 			}
@@ -160,7 +167,15 @@ void testApp::update(){
 			tiny_player.getNextTiny( recorded_tiny, dummy ); 
 			wind.updateTiny( recorded_tiny );
 			wind.sendTiny();
+			
 		}
+		if ( use_video )
+		{
+			vidPlayer.idleMovie();
+			if ( vidPlayer.isFrameNew() )
+				wind.setColorImage( vidPlayer.getPixels(), vidPlayer.getWidth(), vidPlayer.getHeight() );
+		}
+
 	}
 	else
 	{
@@ -169,10 +184,12 @@ void testApp::update(){
 		float timestamp;
 		if ( use_video )
 		{
-			vidPlayer.setFrame(ofGetFrameNum());
+			if ( wind.isRecordingTiny() )
+				vidPlayer.setFrame(ofGetFrameNum());
 			vidPlayer.idleMovie();
 			frame = vidPlayer.isFrameNew();
 			timestamp = vidPlayer.getPosition() * vidPlayer.getDuration();
+			ofLog(OF_LOG_NOTICE, "frame: %s %8.3f %i", frame?"new":"   ", timestamp, vidPlayer.getCurrentFrame() );
 		}
 		else
 		{
@@ -249,6 +266,15 @@ void testApp::saveSettings()
 	data.addValue( "capture_device", capture_device );
 	data.addValue( "capture_width", capture_width );
 	data.addValue( "capture_height", capture_height );
+
+	data.addTag("recorded_tiny");
+	data.pushTag("recorded_tiny");
+	data.addValue("record", record_tiny?1:0 );
+	data.addValue( "use", use_recorded_tiny?1:0 );
+	data.addValue( "filename", recorded_tiny_filename );
+	data.addValue( "loop", tiny_loop?1:0 );
+	data.popTag();
+	
 	data.popTag();
 	
 	wind.saveSettings( data );
@@ -270,10 +296,12 @@ void testApp::keyPressed  (int key){
 			ofLog(OF_LOG_NOTICE, "settings saved");
 			break;
 		case 'w':
-			if ( !use_recorded_tiny )
+			if ( !use_recorded_tiny && !wind.isRecordingTiny() )
 			{
-				wind.startRecordTiny( "tiny-"+ofGetTimestampString()+".dat" );
+				wind.startRecordTiny();
 				ofLog(OF_LOG_NOTICE, "tiny recording started" );
+				if ( use_video )
+					vidPlayer.setLoopState( OF_LOOP_NONE );
 			}
 			break;
 		default:			

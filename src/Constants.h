@@ -19,8 +19,6 @@
 #define SCREEN
 #endif
 
-#define NEW_TINY
-
 static const int FREQ = 44100;
 
 

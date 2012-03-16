@@ -36,6 +36,7 @@ bool WindRecorder::setup( string filename, int _tiny_width, int _tiny_height )
 	fwrite( fourcc_ver, 8, 1, file );
 	fwrite( &tiny_width, sizeof(int), 1, file );
 	fwrite( &tiny_height, sizeof(int), 1, file );
+	
 	return true;
 	
 }
@@ -113,7 +114,9 @@ bool WindPlayer::getNextTiny( unsigned char* tiny, float &return_timestamp )
 	read += fread( tiny, 1, tiny_width*tiny_height, file );
 	
 	last_timestamp = loop_timestamp + timestamp;
-	return_timestamp = last_timestamp;
+	//return_timestamp = last_timestamp;
+	return_timestamp = timestamp;
+
 	
 	if ( read < 2 )
 		return false;
@@ -123,25 +126,36 @@ bool WindPlayer::getNextTiny( unsigned char* tiny, float &return_timestamp )
 
 bool WindPlayer::peekNextTinyTimestamp( float &return_timestamp )
 {
-	if ( feof( file ) )
-	{
-		if ( loop )
-		{
-			loop_timestamp = last_timestamp;
-			fseek(file, 8+sizeof(int)+sizeof(int), SEEK_SET);
-		}
-		else
-			return false;
-	}
 	
 	// read timestamp then rewind
 	float timestamp;
-	int read = fread( &timestamp, sizeof(float), 1, file );
-	if ( read != 1 )
-		return false;
+	int read = 0;
+	while ( read != 1 )
+	{
+		read = fread( &timestamp, sizeof(float), 1, file );
+		if ( read == 1 )
+			break;
+		else
+		{
+			if ( feof( file ) )
+			{
+				if ( loop )
+				{
+					loop_timestamp = last_timestamp;
+					fseek(file, 8+sizeof(int)+sizeof(int), SEEK_SET);
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+		}
+	}
 	
 	fseeko( file, -((int)sizeof(float)), SEEK_CUR );
-	return_timestamp = loop_timestamp + timestamp;
+	//return_timestamp = loop_timestamp + timestamp;
+	return_timestamp = timestamp;
+	
 	ofLog( OF_LOG_NOTICE, "read timestamp %7.2f (ftell: %8d), returning %f", timestamp, ftell(file), return_timestamp );
 	
 		
