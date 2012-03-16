@@ -304,6 +304,14 @@ void testApp::keyPressed  (int key){
 					vidPlayer.setLoopState( OF_LOOP_NONE );
 			}
 			break;
+		case OF_KEY_RIGHT:
+			if ( use_video )
+				vidPlayer.setFrame( min(vidPlayer.getCurrentFrame()+500,vidPlayer.getTotalNumFrames()-1) );
+			break;
+		case OF_KEY_LEFT:
+			if ( use_video )
+				vidPlayer.setFrame( max(0,vidPlayer.getCurrentFrame()-500) );
+			break;
 		default:			
 			wind.keyPressed( key );
 			break;

@@ -6,9 +6,9 @@
         <capture_width>640</capture_width>
         <capture_height>480</capture_height>
         <recorded_tiny>
-            <record>1</record>
-            <use>0</use>
-            <filename>tiny-2012-03-16-14-34-14-135.dat</filename>
+            <record>0</record>
+            <use>1</use>
+            <filename>tiny-2012-03-16-16-46-35-833.dat</filename>
             <loop>1</loop>
         </recorded_tiny>
     </input>

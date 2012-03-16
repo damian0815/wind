@@ -110,7 +110,7 @@ bool WindPlayer::getNextTiny( unsigned char* tiny, float &return_timestamp )
 	if ( read != 1 )
 		return false;
 	// read tiny
-	ofLog( OF_LOG_NOTICE, "got timestamp %f, reading %i bytes into %x", timestamp, tiny_width*tiny_height, tiny );
+	//ofLog( OF_LOG_NOTICE, "got timestamp %f, reading %i bytes into %x", timestamp, tiny_width*tiny_height, tiny );
 	read += fread( tiny, 1, tiny_width*tiny_height, file );
 	
 	last_timestamp = loop_timestamp + timestamp;
@@ -156,7 +156,7 @@ bool WindPlayer::peekNextTinyTimestamp( float &return_timestamp )
 	//return_timestamp = loop_timestamp + timestamp;
 	return_timestamp = timestamp;
 	
-	ofLog( OF_LOG_NOTICE, "read timestamp %7.2f (ftell: %8d), returning %f", timestamp, ftell(file), return_timestamp );
+	//ofLog( OF_LOG_NOTICE, "read timestamp %7.2f (ftell: %8d), returning %f", timestamp, ftell(file), return_timestamp );
 	
 		
 	return true;
